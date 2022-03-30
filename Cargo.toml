@@ -1,0 +1,20 @@
+[package]
+name = "jet-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "jet"
+path = "src/bin/main.rs"
+
+[features]
+default = []
+
+[dependencies]
+anchor-client = { git = "https://github.com/jet-lab/anchor", branch = "master" }
+anchor-spl = { git = "https://github.com/jet-lab/anchor", branch = "master", features = ["token"] }
+anyhow = "1.0"
+clap = { version = "3.1", features = ["derive"] }
+dirs = "4.0"
+jet-proto-auth = { git = "https://github.com/jet-lab/governance", branch = "master", features = ["no-entrypoint"] }
+jet-proto-staking = { git = "https://github.com/jet-lab/governance", branch = "master", features = ["no-entrypoint"] }
