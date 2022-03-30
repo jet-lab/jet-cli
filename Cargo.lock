@@ -442,18 +442,18 @@ dependencies = [
 
 [[package]]
 name = "bytemuck"
-version = "1.8.0"
+version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e851ca7c24871e7336801608a4797d7376545b6928a10d32d75685687141ead"
+checksum = "ee1e0e2125faccb856bf10b0a9dfa89c4c718d05ef85580dfefbdf1c422ef801"
 dependencies = [
  "bytemuck_derive",
 ]
 
 [[package]]
 name = "bytemuck_derive"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e215f8c2f9f79cb53c8335e687ffd07d5bfcb6fe5fc80723762d0be46e7cc54"
+checksum = "562e382481975bc61d11275ac5e62a19abd00b0547d99516a415336f183dcd0e"
 dependencies = [
  "proc-macro2 1.0.36",
  "quote 1.0.17",
@@ -1441,11 +1441,14 @@ dependencies = [
  "dirs",
  "jet-proto-auth",
  "jet-proto-staking",
+ "serde_json",
+ "shellexpand",
 ]
 
 [[package]]
 name = "jet-proto-auth"
 version = "1.0.0"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#020e6fa1c8737aedadaf486bf61c5cd9cfea185a"
 dependencies = [
  "anchor-lang",
 ]
@@ -1453,6 +1456,7 @@ dependencies = [
 [[package]]
 name = "jet-proto-staking"
 version = "1.0.0"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#020e6fa1c8737aedadaf486bf61c5cd9cfea185a"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2393,6 +2397,15 @@ dependencies = [
  "digest 0.9.0",
  "keccak",
  "opaque-debug",
+]
+
+[[package]]
+name = "shellexpand"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83bdb7831b2d85ddf4a7b148aa19d0587eddbe8671a436b7bd1182eaad0f2829"
+dependencies = [
+ "dirs-next",
 ]
 
 [[package]]

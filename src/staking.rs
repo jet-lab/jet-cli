@@ -8,63 +8,37 @@ use anyhow::Result;
 use clap::Subcommand;
 use jet_staking::accounts::{AddStake, InitStakeAccount};
 use jet_staking::state::StakePool;
-use std::{path::PathBuf, rc::Rc};
+use std::rc::Rc;
 
-use crate::{default_keypair_path, load_keypair, parse_cluster};
+use crate::config::ConfigOverride;
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    Add {
-        #[clap(short, long)]
-        keypair: Option<PathBuf>,
-        #[clap(short, long)]
-        pool: Pubkey,
-        #[clap(short, long)]
-        token_account: Pubkey,
-        #[clap(short, long)]
-        url: String,
-    },
-    CreateAccount {
-        #[clap(short, long)]
-        keypair: Option<PathBuf>,
-        #[clap(short, long)]
-        pool: Pubkey,
-        #[clap(short, long)]
-        url: String,
-    },
+    Add { pool: Pubkey, token_account: Pubkey },
+    CreateAccount { pool: Pubkey },
 }
 
-pub fn entry(subcmd: &Command) -> Result<()> {
+pub fn entry(cfg: &ConfigOverride, subcmd: &Command) -> Result<()> {
     match subcmd {
         Command::Add {
-            keypair,
             pool,
             token_account,
-            url,
-        } => add_stake(url, keypair, pool, token_account),
-        Command::CreateAccount { keypair, pool, url } => create_account(url, keypair, pool),
+        } => add_stake(cfg, pool, token_account),
+        Command::CreateAccount { pool } => create_account(cfg, pool),
     }
 }
 
-fn add_stake(
-    url: &String,
-    keypair_path: &Option<PathBuf>,
-    pool: &Pubkey,
-    token_account: &Pubkey,
-) -> Result<()> {
-    let keypair = match keypair_path {
-        Some(p) => load_keypair(p.to_owned())?,
-        None => load_keypair(default_keypair_path()?)?,
-    };
+fn add_stake(overrides: &ConfigOverride, pool: &Pubkey, token_account: &Pubkey) -> Result<()> {
+    let config = overrides.transform()?;
 
     let (account, _) = Pubkey::find_program_address(
-        &[pool.as_ref(), keypair.pubkey().as_ref()],
+        &[pool.as_ref(), config.keypair.pubkey().as_ref()],
         &jet_staking::ID,
     );
 
     let program = Client::new_with_options(
-        parse_cluster(url)?,
-        Rc::new(keypair),
+        config.cluster,
+        Rc::new(config.keypair),
         CommitmentConfig::confirmed(),
     )
     .program(jet_staking::ID);
@@ -88,22 +62,20 @@ fn add_stake(
     Ok(())
 }
 
-fn create_account(url: &String, keypair_path: &Option<PathBuf>, pool: &Pubkey) -> Result<()> {
-    let keypair = match keypair_path {
-        Some(p) => load_keypair(p.to_owned())?,
-        None => load_keypair(default_keypair_path()?)?,
-    };
+fn create_account(overrides: &ConfigOverride, pool: &Pubkey) -> Result<()> {
+    let config = overrides.transform()?;
 
-    let (auth, _) = Pubkey::find_program_address(&[keypair.pubkey().as_ref()], &jet_auth::ID);
+    let (auth, _) =
+        Pubkey::find_program_address(&[config.keypair.pubkey().as_ref()], &jet_auth::ID);
 
     let (account, _) = Pubkey::find_program_address(
-        &[pool.as_ref(), keypair.pubkey().as_ref()],
+        &[pool.as_ref(), config.keypair.pubkey().as_ref()],
         &jet_staking::ID,
     );
 
     let program = Client::new_with_options(
-        parse_cluster(url)?,
-        Rc::new(keypair),
+        config.cluster,
+        Rc::new(config.keypair),
         CommitmentConfig::confirmed(),
     )
     .program(jet_staking::ID);
