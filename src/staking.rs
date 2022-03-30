@@ -73,9 +73,7 @@ fn add_stake(
             payer_token_account: *token_account,
             token_program: token::ID,
         })
-        .args(instruction::AddStake {
-            amount: *amount,
-        })
+        .args(instruction::AddStake { amount: *amount })
         .signer(signer.as_ref())
         .send()?;
 
