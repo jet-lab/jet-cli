@@ -9,6 +9,7 @@ use std::path::PathBuf;
 pub struct Config {
     pub cluster: Cluster,
     pub keypair: Keypair,
+    pub keypair_path: PathBuf,
 }
 
 #[derive(Debug, Parser)]
@@ -26,7 +27,7 @@ pub struct ConfigOverride {
 
 impl ConfigOverride {
     pub fn transform(&self) -> Result<Config> {
-        let normalized_path = if self.keypair_path.starts_with("~") {
+        let normalized_path = if self.keypair_path.starts_with('~') {
             PathBuf::from(shellexpand::tilde(&self.keypair_path).to_string())
         } else {
             PathBuf::from(&self.keypair_path)
@@ -36,13 +37,56 @@ impl ConfigOverride {
             return Err(anyhow!("Provided keypair path was invalid"));
         }
 
-        let data = read_to_string(normalized_path)?;
+        let data = read_to_string(&normalized_path)?;
         let bytes = serde_json::from_str::<Vec<u8>>(&data)?;
         let keypair = Keypair::from_bytes(&bytes)?;
 
         Ok(Config {
             cluster: self.url.clone(),
             keypair,
+            keypair_path: normalized_path,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Cluster;
+    use super::ConfigOverride;
+
+    #[test]
+    fn cfg_transforms_tilde() {
+        let cfg = ConfigOverride {
+            keypair_path: "~/.config/solana/id.json".into(),
+            url: Cluster::Devnet,
+        }
+        .transform()
+        .unwrap();
+
+        assert!(!cfg.keypair_path.starts_with("~"));
+    }
+
+    #[test]
+    fn cfg_persists_cluster() {
+        let cfg = ConfigOverride {
+            keypair_path: "~/.config/solana/id.json".into(),
+            url: Cluster::Mainnet,
+        }
+        .transform()
+        .unwrap();
+
+        assert_eq!(cfg.cluster, Cluster::Mainnet);
+    }
+
+    #[test]
+    fn cfg_read_keypair_bytes() {
+        let cfg = ConfigOverride {
+            keypair_path: "~/.config/solana/id.json".into(),
+            url: Cluster::Devnet,
+        }
+        .transform()
+        .unwrap();
+
+        assert!(cfg.keypair.to_base58_string().len() >= 32);
     }
 }
