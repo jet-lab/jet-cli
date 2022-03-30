@@ -21,6 +21,18 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Cache Cargo
+        uses: actions/cache@v2
+        id: cache-cargo-build
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ./target/
+          key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Format Check
         run: cargo fmt --all --check
 
