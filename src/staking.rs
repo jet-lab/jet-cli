@@ -6,55 +6,77 @@ use anchor_client::Client;
 use anchor_spl::token;
 use anyhow::Result;
 use clap::Subcommand;
-use jet_staking::accounts::{AddStake, InitStakeAccount};
+use jet_staking::accounts;
+use jet_staking::instruction;
 use jet_staking::state::StakePool;
 use std::rc::Rc;
 
 use crate::config::ConfigOverride;
+use crate::program_client;
 
+/// Staking program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    Add { pool: Pubkey, token_account: Pubkey },
-    CreateAccount { pool: Pubkey },
+    Add {
+        amount: Option<u64>,
+        pool: Pubkey,
+        token_account: Pubkey,
+    },
+    CreateAccount {
+        pool: Pubkey,
+    },
+    Unbond {
+        amount: Option<u64>,
+        pool: Pubkey,
+    },
 }
 
+/// The main entry point and handler for all staking
+/// program interaction commands.
 pub fn entry(cfg: &ConfigOverride, subcmd: &Command) -> Result<()> {
     match subcmd {
         Command::Add {
+            amount,
             pool,
             token_account,
-        } => add_stake(cfg, pool, token_account),
+        } => add_stake(cfg, pool, token_account, amount),
         Command::CreateAccount { pool } => create_account(cfg, pool),
+        Command::Unbond { amount, pool } => unbond_stake(cfg, pool, amount),
     }
 }
 
-fn add_stake(overrides: &ConfigOverride, pool: &Pubkey, token_account: &Pubkey) -> Result<()> {
+/// The function handler for the staking subcommand that allows users to add
+/// stake to their designated staking account from an owned token account.
+fn add_stake(
+    overrides: &ConfigOverride,
+    pool: &Pubkey,
+    token_account: &Pubkey,
+    amount: &Option<u64>,
+) -> Result<()> {
     let config = overrides.transform()?;
 
-    let (account, _) = Pubkey::find_program_address(
-        &[pool.as_ref(), config.keypair.pubkey().as_ref()],
-        &jet_staking::ID,
-    );
+    let stake_account = find_staking_address(pool, &config.keypair.pubkey());
 
-    let program = Client::new_with_options(
-        config.cluster,
-        Rc::new(config.keypair),
-        CommitmentConfig::confirmed(),
-    )
-    .program(jet_staking::ID);
+    let (program, signer) = program_client!(config, jet_staking::ID);
 
-    let pool_data: StakePool = program.account(*pool)?;
+    let StakePool {
+        stake_pool_vault, ..
+    } = program.account(*pool)?;
 
     let sig = program
         .request()
-        .accounts(AddStake {
+        .accounts(accounts::AddStake {
             stake_pool: *pool,
-            stake_pool_vault: pool_data.stake_pool_vault,
-            stake_account: account,
+            stake_pool_vault,
+            stake_account,
             payer: program.payer(),
             payer_token_account: *token_account,
             token_program: token::ID,
         })
+        .args(instruction::AddStake {
+            amount: amount.clone(),
+        })
+        .signer(signer.as_ref())
         .send()?;
 
     println!("Signature: {}", sig);
@@ -62,37 +84,83 @@ fn add_stake(overrides: &ConfigOverride, pool: &Pubkey, token_account: &Pubkey) 
     Ok(())
 }
 
+/// The function handler for the staking subcommand that allows users to create a
+/// new staking account for a designated pool for themselves.
 fn create_account(overrides: &ConfigOverride, pool: &Pubkey) -> Result<()> {
     let config = overrides.transform()?;
 
-    let (auth, _) =
-        Pubkey::find_program_address(&[config.keypair.pubkey().as_ref()], &jet_auth::ID);
+    let auth = find_auth_address(&config.keypair.pubkey());
+    let stake_account = find_staking_address(pool, &config.keypair.pubkey());
 
-    let (account, _) = Pubkey::find_program_address(
-        &[pool.as_ref(), config.keypair.pubkey().as_ref()],
-        &jet_staking::ID,
-    );
-
-    let program = Client::new_with_options(
-        config.cluster,
-        Rc::new(config.keypair),
-        CommitmentConfig::confirmed(),
-    )
-    .program(jet_staking::ID);
+    let (program, signer) = program_client!(config, jet_staking::ID);
 
     let sig = program
         .request()
-        .accounts(InitStakeAccount {
+        .accounts(accounts::InitStakeAccount {
             owner: program.payer(),
             auth,
             stake_pool: *pool,
-            stake_account: account,
+            stake_account,
             payer: program.payer(),
             system_program: system_program::ID,
         })
+        .signer(signer.as_ref())
         .send()?;
 
     println!("Signature: {}", sig);
 
     Ok(())
+}
+
+/// The function handler for the staking subcommand that allows users to unbond
+/// existing staking from the pool back into their account.
+fn unbond_stake(overrides: &ConfigOverride, pool: &Pubkey, amount: &Option<u64>) -> Result<()> {
+    let config = overrides.transform()?;
+
+    let stake_account = find_staking_address(pool, &config.keypair.pubkey());
+    let unbonding_account = find_unbonding_address(&stake_account, 0); // FIXME:
+
+    let (program, signer) = program_client!(config, jet_staking::ID);
+
+    let StakePool {
+        stake_pool_vault, ..
+    } = program.account(*pool)?;
+
+    let sig = program
+        .request()
+        .accounts(accounts::UnbondStake {
+            owner: program.payer(),
+            payer: program.payer(),
+            stake_account,
+            stake_pool: *pool,
+            stake_pool_vault,
+            unbonding_account,
+            system_program: system_program::ID,
+        })
+        .args(instruction::UnbondStake {
+            seed: 0, // FIXME:,
+            amount: amount.clone(),
+        })
+        .signer(signer.as_ref())
+        .send()?;
+
+    println!("Signature: {}", sig);
+
+    Ok(())
+}
+
+fn find_auth_address(owner: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(&[owner.as_ref()], &jet_staking::ID).0
+}
+
+fn find_staking_address(stake_pool: &Pubkey, owner: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(&[stake_pool.as_ref(), owner.as_ref()], &jet_staking::ID).0
+}
+
+fn find_unbonding_address(stake_account: &Pubkey, seed: u32) -> Pubkey {
+    Pubkey::find_program_address(
+        &[stake_account.as_ref(), seed.to_le_bytes().as_ref()],
+        &jet_staking::ID,
+    )
+    .0
 }
