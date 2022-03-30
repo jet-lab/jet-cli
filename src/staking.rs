@@ -74,7 +74,7 @@ fn add_stake(
             token_program: token::ID,
         })
         .args(instruction::AddStake {
-            amount: amount.clone(),
+            amount: *amount,
         })
         .signer(signer.as_ref())
         .send()?;
@@ -139,7 +139,7 @@ fn unbond_stake(overrides: &ConfigOverride, pool: &Pubkey, amount: &Option<u64>)
         })
         .args(instruction::UnbondStake {
             seed: 0, // FIXME:,
-            amount: amount.clone(),
+            amount: *amount,
         })
         .signer(signer.as_ref())
         .send()?;
