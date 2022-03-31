@@ -60,45 +60,58 @@ fn add_stake(
         stake_pool_vault, ..
     } = program.account(*pool)?;
 
-    send_and_log!(
-        program,
-        accounts::AddStake {
+    let sig = program
+        .request()
+        .accounts(accounts::AddStake {
             stake_pool: *pool,
             stake_pool_vault,
             stake_account,
             payer: signer.pubkey(),
             payer_token_account: *token_account,
             token_program: token::ID,
-        },
-        args::AddStake { amount: *amount },
-        signer
-    )
+        })
+        .args(args::AddStake { amount: *amount })
+        .signer(signer.as_ref())
+        .send()?;
+
+    if config.verbose {
+        println!("AddStake Signature: {}", sig);
+    }
+
+    Ok(())
 }
 
 /// The function handler for the staking subcommand that allows users to create a
 /// new staking account for a designated pool for themselves.
 fn create_account(overrides: &ConfigOverride, pool: &Pubkey) -> Result<()> {
     let config = overrides.transform()?;
+    let signer_pubkey = config.keypair.pubkey();
 
-    let auth = find_auth_address(&config.keypair.pubkey());
-    let stake_account = find_staking_address(pool, &config.keypair.pubkey());
+    let auth = find_auth_address(&signer_pubkey);
+    let stake_account = find_staking_address(pool, &signer_pubkey);
 
     let (program, signer) = program_client!(config, jet_staking::ID);
 
     assert_not_exists!(program, stake_account);
 
-    send_and_log!(
-        program,
-        accounts::InitStakeAccount {
+    let sig = program
+        .request()
+        .accounts(accounts::InitStakeAccount {
             owner: signer.pubkey(),
             auth,
             stake_pool: *pool,
             stake_account,
             payer: signer.pubkey(),
             system_program: system_program::ID,
-        },
-        signer
-    )
+        })
+        .signer(signer.as_ref())
+        .send()?;
+
+    if config.verbose {
+        println!("InitStakeAccount Signature: {}", sig);
+    }
+
+    Ok(())
 }
 
 /// Derive the public key of a `jet_auth::UserAuthentication` program account.

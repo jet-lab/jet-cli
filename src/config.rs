@@ -10,6 +10,7 @@ pub struct Config {
     pub cluster: Cluster,
     pub keypair: Keypair,
     pub keypair_path: PathBuf,
+    pub verbose: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -23,6 +24,8 @@ pub struct ConfigOverride {
     keypair_path: String,
     #[clap(global = true, short = 'u', long, default_value_t = Cluster::Devnet)]
     url: Cluster,
+    #[clap(global = true, short = 'v', long)]
+    verbose: bool,
 }
 
 impl ConfigOverride {
@@ -45,6 +48,7 @@ impl ConfigOverride {
             cluster: self.url.clone(),
             keypair,
             keypair_path: normalized_path,
+            verbose: self.verbose,
         })
     }
 }
@@ -59,6 +63,7 @@ mod tests {
         let cfg = ConfigOverride {
             keypair_path: "~/.config/solana/id.json".into(),
             url: Cluster::Devnet,
+            verbose: false,
         }
         .transform()
         .unwrap();
@@ -71,6 +76,7 @@ mod tests {
         let cfg = ConfigOverride {
             keypair_path: "~/.config/solana/id.json".into(),
             url: Cluster::Mainnet,
+            verbose: false,
         }
         .transform()
         .unwrap();
@@ -83,6 +89,7 @@ mod tests {
         let cfg = ConfigOverride {
             keypair_path: "~/.config/solana/id.json".into(),
             url: Cluster::Devnet,
+            verbose: false,
         }
         .transform()
         .unwrap();
