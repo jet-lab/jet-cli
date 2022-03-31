@@ -4,7 +4,7 @@ use anchor_client::solana_sdk::signature::Signer;
 use anchor_client::solana_sdk::system_program;
 use anchor_client::Client;
 use anchor_spl::token;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::Subcommand;
 use jet_staking::accounts;
 use jet_staking::instruction as args;
@@ -12,7 +12,7 @@ use jet_staking::state::StakePool;
 use std::rc::Rc;
 
 use crate::config::ConfigOverride;
-use crate::{program_client, send_and_log};
+use crate::macros::*;
 
 /// Staking program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -23,8 +23,6 @@ pub enum Command {
         pool: Pubkey,
         token_account: Pubkey,
     },
-    #[clap(about = "Close your staking account")]
-    CloseAccount { pool: Pubkey },
     #[clap(about = "Create a new staking account")]
     CreateAccount { pool: Pubkey },
 }
@@ -38,7 +36,6 @@ pub fn entry(cfg: &ConfigOverride, subcmd: &Command) -> Result<()> {
             pool,
             token_account,
         } => add_stake(cfg, pool, token_account, amount),
-        Command::CloseAccount { pool } => close_account(cfg, pool),
         Command::CreateAccount { pool } => create_account(cfg, pool),
     }
 }
@@ -57,6 +54,8 @@ fn add_stake(
 
     let (program, signer) = program_client!(config, jet_staking::ID);
 
+    assert_exists!(program, stake_account);
+
     let StakePool {
         stake_pool_vault, ..
     } = program.account(*pool)?;
@@ -67,31 +66,11 @@ fn add_stake(
             stake_pool: *pool,
             stake_pool_vault,
             stake_account,
-            payer: program.payer(),
+            payer: signer.pubkey(),
             payer_token_account: *token_account,
             token_program: token::ID,
         },
         args::AddStake { amount: *amount },
-        signer
-    )
-}
-
-/// The function handler for the staking subcommand that allows user to
-/// close their staking account and receive the rent funds back.
-fn close_account(overrides: &ConfigOverride, pool: &Pubkey) -> Result<()> {
-    let config = overrides.transform()?;
-
-    let stake_account = find_staking_address(pool, &config.keypair.pubkey());
-
-    let (program, signer) = program_client!(config, jet_staking::ID);
-
-    send_and_log!(
-        program,
-        accounts::CloseStakeAccount {
-            owner: program.payer(),
-            closer: program.payer(),
-            stake_account,
-        },
         signer
     )
 }
@@ -106,14 +85,16 @@ fn create_account(overrides: &ConfigOverride, pool: &Pubkey) -> Result<()> {
 
     let (program, signer) = program_client!(config, jet_staking::ID);
 
+    assert_not_exists!(program, stake_account);
+
     send_and_log!(
         program,
         accounts::InitStakeAccount {
-            owner: program.payer(),
+            owner: signer.pubkey(),
             auth,
             stake_pool: *pool,
             stake_account,
-            payer: program.payer(),
+            payer: signer.pubkey(),
             system_program: system_program::ID,
         },
         signer
@@ -128,4 +109,30 @@ fn find_auth_address(owner: &Pubkey) -> Pubkey {
 /// Derive the public key of a `jet_staking::StakeAccount` program account.
 fn find_staking_address(stake_pool: &Pubkey, owner: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(&[stake_pool.as_ref(), owner.as_ref()], &jet_staking::ID).0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn derive_correct_auth_address() {
+        let owner = Pubkey::default();
+        let auth = find_auth_address(&owner);
+        assert_eq!(
+            auth.to_string(),
+            "L2QDXAsEpjW1kmyCJSgJnifrMLa5UiG19AUFa83hZND"
+        );
+    }
+
+    #[test]
+    fn derive_correct_staking_address() {
+        let pool = Pubkey::default();
+        let owner = Pubkey::default();
+        let staking = find_staking_address(&pool, &owner);
+        assert_eq!(
+            staking.to_string(),
+            "3c7McYaJYNGR5jNyxgudWejKMebRZL4AoFPSuNKp9Dsq"
+        );
+    }
 }
