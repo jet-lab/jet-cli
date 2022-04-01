@@ -1,10 +1,12 @@
 use anyhow::Result;
 use clap::{AppSettings, Parser};
 
+mod cmd;
 mod config;
 mod macros;
-mod staking;
+mod terminal;
 
+use cmd::*;
 use config::ConfigOverride;
 
 /// The top level command line options parser for the binary.

@@ -7,14 +7,30 @@ use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct Config {
+    pub auto_approved: bool,
     pub cluster: Cluster,
     pub keypair: Keypair,
     pub keypair_path: PathBuf,
     pub verbose: bool,
 }
 
+#[cfg(test)]
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            auto_approved: bool::default(),
+            cluster: Cluster::default(),
+            keypair: Keypair::new(),
+            keypair_path: PathBuf::default(),
+            verbose: bool::default(),
+        }
+    }
+}
+
 #[derive(Debug, Parser)]
 pub struct ConfigOverride {
+    #[clap(global = true, long)]
+    auto_approve: bool,
     #[clap(
         global = true,
         short = 'k',
@@ -45,6 +61,7 @@ impl ConfigOverride {
         let keypair = Keypair::from_bytes(&bytes)?;
 
         Ok(Config {
+            auto_approved: self.auto_approve,
             cluster: self.url.clone(),
             keypair,
             keypair_path: normalized_path,
@@ -61,6 +78,7 @@ mod tests {
     #[test]
     fn cfg_transforms_tilde() {
         let cfg = ConfigOverride {
+            auto_approve: false,
             keypair_path: "~/.config/solana/id.json".into(),
             url: Cluster::Devnet,
             verbose: false,
@@ -74,6 +92,7 @@ mod tests {
     #[test]
     fn cfg_persists_cluster() {
         let cfg = ConfigOverride {
+            auto_approve: false,
             keypair_path: "~/.config/solana/id.json".into(),
             url: Cluster::Mainnet,
             verbose: false,
@@ -87,6 +106,7 @@ mod tests {
     #[test]
     fn cfg_read_keypair_bytes() {
         let cfg = ConfigOverride {
+            auto_approve: false,
             keypair_path: "~/.config/solana/id.json".into(),
             url: Cluster::Devnet,
             verbose: false,
