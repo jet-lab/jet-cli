@@ -10,6 +10,7 @@ use clap::Subcommand;
 use jet_staking::spl_governance as jet_spl_governance;
 use jet_staking::state::StakePool;
 use jet_staking::{accounts, instruction as args};
+use spinners::*;
 use spl_associated_token_account::{create_associated_token_account, get_associated_token_address};
 use spl_governance::state::realm::get_realm_data;
 use spl_governance::state::token_owner_record::get_token_owner_record_address;
@@ -67,6 +68,8 @@ fn add_stake(
 
     let (program, signer) = program_client!(config, jet_staking::ID);
 
+    let mut sp = Spinner::new(Spinners::Dots, "Finding stake account and pool".into());
+
     // Derive the stake account address for the user and assert
     // the existence of the stake account and stake pool program account
     let stake_account = find_stake_account_address(pool, &signer.pubkey());
@@ -78,6 +81,10 @@ fn add_stake(
         stake_vote_mint,
         ..
     } = program.account(*pool)?;
+
+    sp.stop_with_symbol("✅");
+
+    sp = Spinner::new(Spinners::Dots, "Building prerequisite instructions".into());
 
     // Create the instruction for `jet_staking::AddStake` to prepend the vote minting
     let add_stake_ix = Instruction::new_with_borsh(
@@ -130,6 +137,10 @@ fn add_stake(
 
     let governance_vault = find_governance_vault_address(realm, &realm_data.community_mint);
 
+    sp.stop_with_symbol("✅");
+
+    sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
+
     // Build and send the remaining of the transaction from the
     // `jet_staking::MintVotes` instruction and send it
     let signature = req
@@ -153,8 +164,10 @@ fn add_stake(
         .signer(signer.as_ref())
         .send()?;
 
+    sp.stop_with_message("✅ Transaction confirmed!".into());
+
     if config.verbose {
-        println!("Transaction Signature: {}", signature);
+        println!("Signature: {}", signature);
     }
 
     Ok(())
@@ -177,8 +190,10 @@ fn create_account(overrides: &ConfigOverride, pool: &Pubkey) -> Result<()> {
 
     assert_not_exists!(program, &stake_account);
 
+    let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
+
     // Build and send the `jet_staking::InitStakeAccount` transaction
-    let sig = program
+    let signature = program
         .request()
         .accounts(accounts::InitStakeAccount {
             owner: signer.pubkey(),
@@ -191,8 +206,10 @@ fn create_account(overrides: &ConfigOverride, pool: &Pubkey) -> Result<()> {
         .signer(signer.as_ref())
         .send()?;
 
+    sp.stop_with_message("✅ Transaction confirmed!".into());
+
     if config.verbose {
-        println!("InitStakeAccount Signature: {}", sig);
+        println!("Signature: {}", signature);
     }
 
     Ok(())

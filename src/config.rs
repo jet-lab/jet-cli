@@ -5,28 +5,8 @@ use clap::Parser;
 use std::fs::read_to_string;
 use std::path::PathBuf;
 
-#[derive(Debug)]
-pub struct Config {
-    pub auto_approved: bool,
-    pub cluster: Cluster,
-    pub keypair: Keypair,
-    pub keypair_path: PathBuf,
-    pub verbose: bool,
-}
-
-#[cfg(test)]
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            auto_approved: bool::default(),
-            cluster: Cluster::default(),
-            keypair: Keypair::new(),
-            keypair_path: PathBuf::default(),
-            verbose: bool::default(),
-        }
-    }
-}
-
+/// The struct definition of the available global command
+/// options that can be used to override or set standard behavior.
 #[derive(Debug, Parser)]
 pub struct ConfigOverride {
     #[clap(global = true, long)]
@@ -45,6 +25,8 @@ pub struct ConfigOverride {
 }
 
 impl ConfigOverride {
+    /// Converts the provided and default command line global options
+    /// into the standard configuration for the executed command.
     pub fn transform(&self) -> Result<Config> {
         let normalized_path = if self.keypair_path.starts_with('~') {
             PathBuf::from(shellexpand::tilde(&self.keypair_path).to_string())
@@ -67,6 +49,32 @@ impl ConfigOverride {
             keypair_path: normalized_path,
             verbose: self.verbose,
         })
+    }
+}
+
+/// The struct definitions of the options that are transformed
+/// by the global CLI overrides for all commands.
+#[derive(Debug)]
+pub struct Config {
+    pub auto_approved: bool,
+    pub cluster: Cluster,
+    pub keypair: Keypair,
+    pub keypair_path: PathBuf,
+    pub verbose: bool,
+}
+
+/// Default implementation for the `Config` struct purposed for
+/// quickly instantiating during the cargo test executions.
+#[cfg(test)]
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            auto_approved: bool::default(),
+            cluster: Cluster::default(),
+            keypair: Keypair::new(),
+            keypair_path: PathBuf::default(),
+            verbose: bool::default(),
+        }
     }
 }
 

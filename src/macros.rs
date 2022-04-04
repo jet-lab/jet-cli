@@ -14,11 +14,11 @@
 /// ```
 macro_rules! assert_exists {
     ($program:ident, $pubkey:expr) => {{
-        let info = $program
+        let __acc_info = $program
             .rpc()
             .get_account_with_commitment($pubkey, CommitmentConfig::confirmed())?;
 
-        if info.value.is_none() {
+        if __acc_info.value.is_none() {
             return Err(anyhow!("Program account {} does not exist", $pubkey));
         }
     }};
@@ -40,11 +40,11 @@ pub(crate) use assert_exists;
 /// ```
 macro_rules! assert_not_exists {
     ($program:ident, $pubkey:expr) => {{
-        let info = $program
+        let __acc_info = $program
             .rpc()
             .get_account_with_commitment($pubkey, CommitmentConfig::confirmed())?;
 
-        if info.value.is_some() {
+        if __acc_info.value.is_some() {
             return Err(anyhow!("Program account {} already exists", $pubkey));
         }
     }};
@@ -90,15 +90,15 @@ pub(crate) use fetch_realm;
 /// ```
 macro_rules! program_client {
     ($config:ident, $program:expr) => {{
-        let payer = std::rc::Rc::new($config.keypair);
+        let __payer = std::rc::Rc::new($config.keypair);
         (
             anchor_client::Client::new_with_options(
                 $config.cluster,
-                payer.clone(),
+                __payer.clone(),
                 anchor_client::solana_sdk::commitment_config::CommitmentConfig::confirmed(),
             )
             .program($program),
-            payer,
+            __payer,
         )
     }};
 }
