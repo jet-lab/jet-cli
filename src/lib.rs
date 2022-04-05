@@ -5,6 +5,7 @@ use clap::{AppSettings, Parser};
 mod cmd;
 mod config;
 mod macros;
+mod pubkey;
 mod terminal;
 
 use cmd::*;
@@ -26,7 +27,7 @@ pub struct Opts {
 /// be based on the Jet Protocol programs that a user can
 /// interact with via the command line tool.
 #[derive(Debug, Parser)]
-pub enum Command {
+enum Command {
     Auth {
         #[clap(global = true, long, default_value_t = jet_auth::ID)]
         program: Pubkey,

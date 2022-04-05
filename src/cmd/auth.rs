@@ -8,6 +8,7 @@ use spinners::*;
 
 use crate::config::ConfigOverride;
 use crate::macros::{assert_not_exists, program_client};
+use crate::pubkey::find_auth_address;
 use crate::terminal::request_approval;
 
 /// Auth program based subcommand enum variants.
@@ -62,23 +63,4 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey) -> Result<()>
     println!("Pubkey: {}", auth);
 
     Ok(())
-}
-
-/// Derive the public key of a `jet_auth::UserAuthentication` program account.
-pub(super) fn find_auth_address(owner: &Pubkey, program: &Pubkey) -> Pubkey {
-    Pubkey::find_program_address(&[owner.as_ref()], program).0
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn derive_correct_auth_address() {
-        let auth = find_auth_address(&Pubkey::default(), &jet_auth::ID);
-        assert_eq!(
-            auth.to_string(),
-            "L2QDXAsEpjW1kmyCJSgJnifrMLa5UiG19AUFa83hZND"
-        );
-    }
 }
