@@ -2,13 +2,14 @@ use anchor_client::anchor_lang::ToAccountMetas;
 use anchor_client::solana_sdk::instruction::Instruction;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Signer;
-use anchor_client::solana_sdk::{system_program, sysvar};
+use anchor_client::solana_sdk::system_program::ID as system_program;
+use anchor_client::solana_sdk::sysvar::rent::ID as rent;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token;
+use anchor_spl::token::ID as token_program;
 use anyhow::Result;
 use clap::Subcommand;
 use jet_staking::state::{StakeAccount, StakePool};
-use jet_staking::{accounts, instruction as args, spl_governance as jet_spl_governance};
+use jet_staking::{accounts, instruction, spl_governance as jet_spl_governance, PoolConfig};
 use spinners::*;
 use spl_associated_token_account::{create_associated_token_account, get_associated_token_address};
 use spl_governance::state::realm::get_realm_data;
@@ -33,17 +34,26 @@ pub enum Command {
         #[clap(long)]
         token_account: Pubkey,
     },
-    #[clap(about = "Close a staking account")]
+    #[clap(about = "Close a stake account")]
     CloseAccount {
         #[clap(long)]
         pool: Pubkey,
         #[clap(long)]
         receiver: Option<Pubkey>,
     },
-    #[clap(about = "Create a new staking account")]
+    #[clap(about = "Create a new stake account")]
     CreateAccount {
         #[clap(long)]
         pool: Pubkey,
+    },
+    #[clap(about = "Create a new staking pool")]
+    CreatePool {
+        #[clap(long)]
+        seed: String,
+        #[clap(long)]
+        token_mint: Pubkey,
+        #[clap(long)]
+        unbond_period: u64,
     },
 }
 
@@ -59,6 +69,17 @@ pub fn entry(cfg: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Res
         } => add_stake(cfg, program_id, amount, pool, realm, token_account),
         Command::CloseAccount { pool, receiver } => close_account(cfg, program_id, pool, receiver),
         Command::CreateAccount { pool } => create_account(cfg, program_id, pool),
+        Command::CreatePool {
+            seed,
+            token_mint,
+            unbond_period,
+        } => create_pool(
+            cfg,
+            program_id,
+            seed.clone(),
+            token_mint,
+            unbond_period.clone(),
+        ),
     }
 }
 
@@ -98,14 +119,14 @@ fn add_stake(
     // Create the instruction for `jet_staking::AddStake` to prepend the vote minting
     let add_stake_ix = Instruction::new_with_borsh(
         jet_staking::ID,
-        &args::AddStake { amount: *amount },
+        &instruction::AddStake { amount: *amount },
         accounts::AddStake {
             stake_pool: *pool,
             stake_pool_vault,
             stake_account,
             payer: signer.pubkey(),
             payer_token_account: *token_account,
-            token_program: token::ID,
+            token_program,
         }
         .to_account_metas(None),
     );
@@ -160,11 +181,11 @@ fn add_stake(
             governance_owner_record,
             payer: signer.pubkey(),
             governance_program: jet_spl_governance::ID,
-            token_program: token::ID,
-            system_program: system_program::ID,
-            rent: sysvar::rent::ID,
+            token_program,
+            system_program,
+            rent,
         })
-        .args(args::MintVotes { amount: None })
+        .args(instruction::MintVotes { amount: None })
         .signer(signer.as_ref())
         .send()?;
 
@@ -210,7 +231,7 @@ fn close_account(
             closer,
             stake_account,
         })
-        .args(args::CloseStakeAccount {})
+        .args(instruction::CloseStakeAccount {})
         .signer(signer.as_ref())
         .send()?;
 
@@ -250,18 +271,72 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey, pool: &Pubkey
             stake_pool: *pool,
             stake_account,
             payer: signer.pubkey(),
-            system_program: system_program::ID,
+            system_program,
         })
-        .args(args::InitStakeAccount {})
+        .args(instruction::InitStakeAccount {})
         .signer(signer.as_ref())
         .send()?;
 
     sp.stop_with_message("✅ Transaction confirmed!\n".into());
 
+    if config.verbose {
+        println!("Signature: {}\n", signature);
+    }
+
     println!("Pubkey: {}", stake_account);
 
+    Ok(())
+}
+
+/// The function handler for the staking subcommand that allows a user
+/// to create a new staking pool with the appropriate mints from a seed.
+fn create_pool(
+    overrides: &ConfigOverride,
+    program_id: &Pubkey,
+    seed: String,
+    token_mint: &Pubkey,
+    unbond_period: u64,
+) -> Result<()> {
+    let config = overrides.transform()?;
+    request_approval(&config)?;
+
+    let (program, signer) = program_client!(config, *program_id);
+
+    // Derive the public keys needed for a new staking pool and
+    // ensure that the pool address doesn't already exist
+    let StakePoolAddresses {
+        pool,
+        vault,
+        collateral_mint,
+        vote_mint,
+    } = find_stake_pool_addresses(&seed, &program.id());
+
+    assert_not_exists!(program, StakePool, &pool);
+
+    // Build and send the `jet_staking::instruction::InitPool` transaction
+    let signature = program
+        .request()
+        .accounts(accounts::InitPool {
+            payer: signer.pubkey(),
+            authority: signer.pubkey(),
+            token_mint: *token_mint,
+            stake_pool: pool,
+            stake_vote_mint: vote_mint,
+            stake_collateral_mint: collateral_mint,
+            stake_pool_vault: vault,
+            token_program,
+            system_program,
+            rent,
+        })
+        .args(instruction::InitPool {
+            seed,
+            config: PoolConfig { unbond_period },
+        })
+        .signer(signer.as_ref())
+        .send()?;
+
     if config.verbose {
-        println!("Signature: {}", signature);
+        println!("Signature: {}\n", signature);
     }
 
     Ok(())
@@ -276,9 +351,32 @@ fn find_governance_vault_address(realm: &Pubkey, mint: &Pubkey) -> Pubkey {
     .0
 }
 
-/// Derive the public key of a `jet_staking::StakeAccount` program account.
+/// Derive the public key of a `jet_staking::state::StakeAccount` program account.
 fn find_stake_account_address(stake_pool: &Pubkey, owner: &Pubkey, program: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(&[stake_pool.as_ref(), owner.as_ref()], program).0
+}
+
+/// Derive all the necessary public keys for creating a new
+/// `jet_staking::state::StakePool` program account.
+fn find_stake_pool_addresses(seed: &str, program: &Pubkey) -> StakePoolAddresses {
+    StakePoolAddresses {
+        pool: Pubkey::find_program_address(&[seed.as_ref()], program).0,
+        vault: Pubkey::find_program_address(&[seed.as_ref(), b"vault"], program).0,
+        collateral_mint: Pubkey::find_program_address(
+            &[seed.as_ref(), b"collateral-mint"],
+            program,
+        )
+        .0,
+        vote_mint: Pubkey::find_program_address(&[seed.as_ref(), b"vote-mint"], program).0,
+    }
+}
+
+#[derive(Debug)]
+struct StakePoolAddresses {
+    pool: Pubkey,
+    vault: Pubkey,
+    collateral_mint: Pubkey,
+    vote_mint: Pubkey,
 }
 
 #[cfg(test)]
