@@ -1,20 +1,20 @@
 use anchor_client::anchor_lang::ToAccountMetas;
+use anchor_client::solana_client::rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType};
 use anchor_client::solana_sdk::commitment_config::CommitmentConfig;
 use anchor_client::solana_sdk::instruction::Instruction;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Signer;
 use anchor_client::solana_sdk::{system_program, sysvar};
 use anchor_spl::token;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use clap::Subcommand;
-use jet_staking::spl_governance as jet_spl_governance;
-use jet_staking::state::StakePool;
-use jet_staking::{accounts, instruction as args};
+use jet_staking::{accounts, instruction as args, spl_governance as jet_spl_governance, state};
 use spinners::*;
 use spl_associated_token_account::{create_associated_token_account, get_associated_token_address};
 use spl_governance::state::realm::get_realm_data;
 use spl_governance::state::token_owner_record::get_token_owner_record_address;
 
+use super::auth::find_auth_address;
 use crate::config::ConfigOverride;
 use crate::macros::*;
 use crate::terminal::request_approval;
@@ -49,16 +49,16 @@ pub enum Command {
 
 /// The main entry point and handler for all staking
 /// program interaction commands.
-pub fn entry(cfg: &ConfigOverride, program: &Pubkey, subcmd: &Command) -> Result<()> {
+pub fn entry(cfg: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Result<()> {
     match subcmd {
         Command::Add {
             amount,
             pool,
             realm,
             token_account,
-        } => add_stake(cfg, program, amount, pool, realm, token_account),
-        Command::CloseAccount { pool, receiver } => close_account(cfg, program, pool, receiver),
-        Command::CreateAccount { pool } => create_account(cfg, program, pool),
+        } => add_stake(cfg, program_id, amount, pool, realm, token_account),
+        Command::CloseAccount { pool, receiver } => close_account(cfg, program_id, pool, receiver),
+        Command::CreateAccount { pool } => create_account(cfg, program_id, pool),
     }
 }
 
@@ -66,7 +66,7 @@ pub fn entry(cfg: &ConfigOverride, program: &Pubkey, subcmd: &Command) -> Result
 /// stake to their designated staking account from an owned token account.
 fn add_stake(
     overrides: &ConfigOverride,
-    program: &Pubkey,
+    program_id: &Pubkey,
     amount: &Option<u64>,
     pool: &Pubkey,
     realm: &Pubkey,
@@ -75,17 +75,25 @@ fn add_stake(
     let config = overrides.transform()?;
     request_approval(&config)?;
 
-    let (program, signer) = program_client!(config, *program);
+    let (program, signer) = program_client!(config, *program_id);
 
     let mut sp = Spinner::new(Spinners::Dots, "Finding stake account and pool".into());
 
     // Derive the stake account address for the user and assert
     // the existence of the stake account and stake pool program account
-    let stake_account = find_stake_account_address(pool, &signer.pubkey());
-    assert_exists!(program, &stake_account);
-    assert_exists!(program, pool);
+    let stake_account = find_stake_account_address(pool, &signer.pubkey(), &program.id());
 
-    let StakePool {
+    assert_pda_exists!(
+        program,
+        Some(vec![RpcFilterType::Memcmp(Memcmp {
+            offset: 8,
+            bytes: MemcmpEncodedBytes::Bytes(signer.pubkey().as_ref().to_vec()),
+            encoding: None,
+        })]),
+        &stake_account,
+    );
+
+    let state::StakePool {
         stake_pool_vault,
         stake_vote_mint,
         ..
@@ -173,7 +181,7 @@ fn add_stake(
         .signer(signer.as_ref())
         .send()?;
 
-    sp.stop_with_message("✅ Transaction confirmed!".into());
+    sp.stop_with_message("✅ Transaction confirmed!\n".into());
 
     if config.verbose {
         println!("Signature: {}", signature);
@@ -185,19 +193,28 @@ fn add_stake(
 /// The function handler for a user closing their staking account.
 fn close_account(
     overrides: &ConfigOverride,
-    program: &Pubkey,
+    program_id: &Pubkey,
     pool: &Pubkey,
     receiver: &Option<Pubkey>,
 ) -> Result<()> {
     let config = overrides.transform()?;
     request_approval(&config)?;
 
-    let (program, signer) = program_client!(config, *program);
+    let (program, signer) = program_client!(config, *program_id);
 
     // Derive the public key of the `jet_staking::StakeAccount` that
     // is being closed in the instruction call and assert that is exists
-    let stake_account = find_stake_account_address(pool, &signer.pubkey());
-    assert_exists!(program, &stake_account);
+    let stake_account = find_stake_account_address(pool, &signer.pubkey(), &program.id());
+
+    assert_pda_exists!(
+        program,
+        Some(vec![RpcFilterType::Memcmp(Memcmp {
+            offset: 8,
+            bytes: MemcmpEncodedBytes::Bytes(signer.pubkey().as_ref().to_vec()),
+            encoding: None,
+        })]),
+        &stake_account,
+    );
 
     let closer = match receiver {
         Some(pk) => *pk,
@@ -217,7 +234,7 @@ fn close_account(
         .signer(signer.as_ref())
         .send()?;
 
-    sp.stop_with_message("✅ Transaction confirmed!".into());
+    sp.stop_with_message("✅ Transaction confirmed!\n".into());
 
     if config.verbose {
         println!("Signature: {}", signature);
@@ -228,19 +245,27 @@ fn close_account(
 
 /// The function handler for the staking subcommand that allows users to create a
 /// new staking account for a designated pool for themselves.
-fn create_account(overrides: &ConfigOverride, program: &Pubkey, pool: &Pubkey) -> Result<()> {
+fn create_account(overrides: &ConfigOverride, program_id: &Pubkey, pool: &Pubkey) -> Result<()> {
     let config = overrides.transform()?;
     request_approval(&config)?;
 
-    let (program, signer) = program_client!(config, *program);
+    let (program, signer) = program_client!(config, *program_id);
 
     // Derive the public keys for the user's `jet_auth::UserAuthentication`
     // and `jet_staking::StakeAccount` program accounts and assert that the
     // stake account does not exist since this command creates one
-    let auth = find_auth_address(&signer.pubkey());
-    let stake_account = find_stake_account_address(pool, &signer.pubkey());
+    let auth = find_auth_address(&signer.pubkey(), &program.id());
+    let stake_account = find_stake_account_address(pool, &signer.pubkey(), &program.id());
 
-    assert_not_exists!(program, &stake_account);
+    assert_pda_not_exists!(
+        program,
+        Some(vec![RpcFilterType::Memcmp(Memcmp {
+            offset: 8,
+            bytes: MemcmpEncodedBytes::Bytes(signer.pubkey().as_ref().to_vec()),
+            encoding: None,
+        })]),
+        &stake_account,
+    );
 
     let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
 
@@ -258,18 +283,15 @@ fn create_account(overrides: &ConfigOverride, program: &Pubkey, pool: &Pubkey) -
         .signer(signer.as_ref())
         .send()?;
 
-    sp.stop_with_message("✅ Transaction confirmed!".into());
+    sp.stop_with_message("✅ Transaction confirmed!\n".into());
+
+    println!("Pubkey: {}", stake_account);
 
     if config.verbose {
         println!("Signature: {}", signature);
     }
 
     Ok(())
-}
-
-/// Derive the public key of a `jet_auth::UserAuthentication` program account.
-fn find_auth_address(owner: &Pubkey) -> Pubkey {
-    Pubkey::find_program_address(&[owner.as_ref()], &jet_auth::ID).0
 }
 
 /// Derive the public key of a governance token vault program account.
@@ -282,22 +304,13 @@ fn find_governance_vault_address(realm: &Pubkey, mint: &Pubkey) -> Pubkey {
 }
 
 /// Derive the public key of a `jet_staking::StakeAccount` program account.
-fn find_stake_account_address(stake_pool: &Pubkey, owner: &Pubkey) -> Pubkey {
-    Pubkey::find_program_address(&[stake_pool.as_ref(), owner.as_ref()], &jet_staking::ID).0
+fn find_stake_account_address(stake_pool: &Pubkey, owner: &Pubkey, program: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(&[stake_pool.as_ref(), owner.as_ref()], program).0
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn derive_correct_auth_address() {
-        let auth = find_auth_address(&Pubkey::default());
-        assert_eq!(
-            auth.to_string(),
-            "L2QDXAsEpjW1kmyCJSgJnifrMLa5UiG19AUFa83hZND"
-        );
-    }
 
     #[test]
     fn derive_correct_governance_vault_address() {
@@ -310,7 +323,8 @@ mod tests {
 
     #[test]
     fn derive_correct_staking_address() {
-        let staking = find_stake_account_address(&Pubkey::default(), &Pubkey::default());
+        let staking =
+            find_stake_account_address(&Pubkey::default(), &Pubkey::default(), &jet_staking::ID);
         assert_eq!(
             staking.to_string(),
             "3c7McYaJYNGR5jNyxgudWejKMebRZL4AoFPSuNKp9Dsq"

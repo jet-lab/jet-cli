@@ -18,7 +18,7 @@ pub struct ConfigOverride {
         default_value = "~/.config/solana/id.json"
     )]
     keypair_path: String,
-    #[clap(global = true, short = 'u', long, default_value_t = Cluster::Devnet)]
+    #[clap(global = true, short = 'u', long, default_value_t = Cluster::Localnet)]
     url: Cluster,
     #[clap(global = true, short = 'v', long)]
     verbose: bool,
