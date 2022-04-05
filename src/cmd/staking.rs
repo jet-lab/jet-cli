@@ -33,6 +33,13 @@ pub enum Command {
         #[clap(long)]
         token_account: Pubkey,
     },
+    #[clap(about = "Close a staking account")]
+    CloseAccount {
+        #[clap(long)]
+        pool: Pubkey,
+        #[clap(long)]
+        receiver: Option<Pubkey>,
+    },
     #[clap(about = "Create a new staking account")]
     CreateAccount {
         #[clap(long)]
@@ -50,6 +57,7 @@ pub fn entry(cfg: &ConfigOverride, subcmd: &Command) -> Result<()> {
             realm,
             token_account,
         } => add_stake(cfg, amount, pool, realm, token_account),
+        Command::CloseAccount { pool, receiver } => close_account(cfg, pool, receiver),
         Command::CreateAccount { pool } => create_account(cfg, pool),
     }
 }
@@ -82,7 +90,7 @@ fn add_stake(
         ..
     } = program.account(*pool)?;
 
-    sp.stop_with_symbol("✅");
+    sp.stop_with_message("✅ Stake account and pool found".into());
 
     sp = Spinner::new(Spinners::Dots, "Building prerequisite instructions".into());
 
@@ -137,7 +145,7 @@ fn add_stake(
 
     let governance_vault = find_governance_vault_address(realm, &realm_data.community_mint);
 
-    sp.stop_with_symbol("✅");
+    sp.stop_with_message("✅ Instruction bytes compiled".into());
 
     sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
 
@@ -173,20 +181,62 @@ fn add_stake(
     Ok(())
 }
 
+/// The function handler for a user closing their staking account.
+fn close_account(
+    overrides: &ConfigOverride,
+    pool: &Pubkey,
+    receiver: &Option<Pubkey>,
+) -> Result<()> {
+    let config = overrides.transform()?;
+    request_approval(&config)?;
+
+    let (program, signer) = program_client!(config, jet_staking::ID);
+
+    // Derive the public key of the `jet_staking::StakeAccount` that
+    // is being closed in the instruction call and assert that is exists
+    let stake_account = find_stake_account_address(pool, &signer.pubkey());
+    assert_exists!(program, &stake_account);
+
+    let closer = match receiver {
+        Some(pk) => *pk,
+        None => signer.pubkey(),
+    };
+
+    let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
+
+    // Build and send the `jet_staking::CloseStakeAccount` transaction
+    let signature = program
+        .request()
+        .accounts(accounts::CloseStakeAccount {
+            owner: signer.pubkey(),
+            closer,
+            stake_account,
+        })
+        .signer(signer.as_ref())
+        .send()?;
+
+    sp.stop_with_message("✅ Transaction confirmed!".into());
+
+    if config.verbose {
+        println!("Signature: {}", signature);
+    }
+
+    Ok(())
+}
+
 /// The function handler for the staking subcommand that allows users to create a
 /// new staking account for a designated pool for themselves.
 fn create_account(overrides: &ConfigOverride, pool: &Pubkey) -> Result<()> {
     let config = overrides.transform()?;
-    let signer_pubkey = config.keypair.pubkey();
     request_approval(&config)?;
+
+    let (program, signer) = program_client!(config, jet_staking::ID);
 
     // Derive the public keys for the user's `jet_auth::UserAuthentication`
     // and `jet_staking::StakeAccount` program accounts and assert that the
     // stake account does not exist since this command creates one
-    let auth = find_auth_address(&signer_pubkey);
-    let stake_account = find_stake_account_address(pool, &signer_pubkey);
-
-    let (program, signer) = program_client!(config, jet_staking::ID);
+    let auth = find_auth_address(&signer.pubkey());
+    let stake_account = find_stake_account_address(pool, &signer.pubkey());
 
     assert_not_exists!(program, &stake_account);
 
