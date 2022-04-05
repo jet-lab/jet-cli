@@ -6,7 +6,7 @@ use anchor_client::solana_sdk::system_program::ID as system_program;
 use anchor_client::solana_sdk::sysvar::rent::ID as rent;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::ID as token_program;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use clap::Subcommand;
 use jet_staking::state::{StakeAccount, StakePool};
 use jet_staking::{accounts, instruction, spl_governance as jet_spl_governance, PoolConfig};
@@ -14,31 +14,12 @@ use spinners::*;
 use spl_associated_token_account::{create_associated_token_account, get_associated_token_address};
 use spl_governance::state::realm::get_realm_data;
 use spl_governance::state::token_owner_record::get_token_owner_record_address;
-use std::str::FromStr;
 
 use crate::config::ConfigOverride;
 use crate::macros::*;
 use crate::pubkey::find_auth_address;
 use crate::pubkey::*;
 use crate::terminal::request_approval;
-
-#[derive(Debug, PartialEq)]
-pub enum WithdrawType {
-    Bonded,
-    Unbonded,
-}
-
-impl FromStr for WithdrawType {
-    type Err = anyhow::Error;
-
-    fn from_str(val: &str) -> Result<Self> {
-        match val {
-            "b" | "bonded" => Ok(WithdrawType::Bonded),
-            "u" | "unbonded" => Ok(WithdrawType::Unbonded),
-            _ => Err(anyhow!("unknown withdraw type string to parse")),
-        }
-    }
-}
 
 /// Staking program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -75,10 +56,17 @@ pub enum Command {
         #[clap(long)]
         unbond_period: u64,
     },
-    #[clap(about = "Withdraw staked funds from a pool")]
-    Withdraw {
+    #[clap(about = "Withdraw bonded stake funds from a pool")]
+    WithdrawBonded {
         #[clap(long)]
-        amount: Option<u64>,
+        amount: u64,
+        #[clap(long)]
+        pool: Pubkey,
+        #[clap(long)]
+        receiver: Option<Pubkey>,
+    },
+    #[clap(about = "Withdraw bonded stake funds from a pool")]
+    WithdrawUnbonded {
         #[clap(long)]
         pool: Pubkey,
         #[clap(long)]
@@ -86,9 +74,7 @@ pub enum Command {
         #[clap(long)]
         token_receiver: Option<Pubkey>,
         #[clap(long)]
-        unbonding_account: Option<Pubkey>,
-        #[clap(long = "type")]
-        withdraw_type: WithdrawType,
+        unbonding_account: Pubkey,
     },
 }
 
@@ -109,22 +95,23 @@ pub fn entry(cfg: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Res
             token_mint,
             unbond_period,
         } => create_pool(cfg, program_id, seed.clone(), token_mint, *unbond_period),
-        Command::Withdraw {
+        Command::WithdrawBonded {
             amount,
+            pool,
+            receiver,
+        } => withdraw_bonded(cfg, program_id, *amount, pool, receiver),
+        Command::WithdrawUnbonded {
             pool,
             rent_receiver,
             token_receiver,
             unbonding_account,
-            withdraw_type,
-        } => withdraw(
+        } => withdraw_unbonded(
             cfg,
             program_id,
-            amount,
             pool,
             rent_receiver,
             token_receiver,
             unbonding_account,
-            withdraw_type,
         ),
     }
 }
@@ -388,109 +375,103 @@ fn create_pool(
     Ok(())
 }
 
-/// The function handler for the staking subcommand that allows users to either
-/// withdraw bonded or unbonded stake from the designated pool based on the
-/// provided value for the `--type` (`WithdrawType`) command argument.
-fn withdraw(
+/// The function handler for the staking subcommand that allows users to
+/// withdraw bonded stake from the designated pool.
+fn withdraw_bonded(
     overrides: &ConfigOverride,
     program_id: &Pubkey,
-    amount: &Option<u64>,
+    amount: u64,
     pool: &Pubkey,
-    rent_receiver: &Option<Pubkey>,
-    token_receiver: &Option<Pubkey>,
-    unbonding_account: &Option<Pubkey>,
-    withdraw_type: &WithdrawType,
+    receiver: &Option<Pubkey>,
 ) -> Result<()> {
-    // Return error for required missing arguments or log a warning
-    // or any unused arguments provided based on the selected
-    // stake withdraw type instruction provided
-    if *withdraw_type == WithdrawType::Bonded {
-        if amount.is_none() {
-            return Err(anyhow!(
-                "Error: argument '--amount' is required with bonded withdraws"
-            ));
-        }
-
-        if rent_receiver.is_some() {
-            println!("Warning: argument '--rent-receiver' is unused with bonded withdraws");
-        }
-    } else {
-        if unbonding_account.is_none() {
-            return Err(anyhow!(
-                "Error: argument '--unbonding-account' is required with unbonded withdraws"
-            ));
-        }
-
-        if amount.is_some() {
-            println!("Warning: argument '--amount' is unused with unbonded withdraws");
-        }
-    }
-
     let config = overrides.transform()?;
     request_approval(&config)?;
 
     let (program, signer) = program_client!(config, *program_id);
 
-    let mut req = program.request();
+    let token_receiver = match receiver {
+        Some(pk) => *pk,
+        None => signer.pubkey(),
+    };
 
-    let mut sp = Spinner::new(Spinners::Dots, "Deriving required accounts".into());
+    let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
+
+    let StakePool {
+        stake_pool_vault, ..
+    } = program.account(*pool)?;
+
+    // Build and send the `jet_staking::instruction::WithdrawBonded` transaction
+    let signature = program
+        .request()
+        .accounts(accounts::WithdrawBonded {
+            authority: signer.pubkey(),
+            stake_pool: *pool,
+            token_receiver,
+            stake_pool_vault,
+            token_program,
+        })
+        .args(instruction::WithdrawBonded { amount })
+        .signer(signer.as_ref())
+        .send()?;
+
+    sp.stop_with_message("✅ Transaction confirmed!\n".into());
+
+    if config.verbose {
+        println!("Signature: {}", signature);
+    }
+
+    Ok(())
+}
+
+/// The function handler for the staking subcommand that allows users to
+/// withdraw unbonded stake from the designated pool.
+fn withdraw_unbonded(
+    overrides: &ConfigOverride,
+    program_id: &Pubkey,
+    pool: &Pubkey,
+    rent_receiver: &Option<Pubkey>,
+    token_receiver: &Option<Pubkey>,
+    unbonding_account: &Pubkey,
+) -> Result<()> {
+    let config = overrides.transform()?;
+    request_approval(&config)?;
+
+    let (program, signer) = program_client!(config, *program_id);
+
+    let stake_account = find_stake_account_address(pool, &signer.pubkey(), &program.id());
+
+    let rent_closer = match rent_receiver {
+        Some(pk) => *pk,
+        None => signer.pubkey(),
+    };
 
     let token_closer = match token_receiver {
         Some(pk) => *pk,
         None => signer.pubkey(),
     };
 
+    let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
+
     let StakePool {
         stake_pool_vault, ..
     } = program.account(*pool)?;
 
-    // Assign the transaction accounts and instruction arguments to
-    // the request based on the provided `WithdrawType` argument
-    req = match *withdraw_type {
-        WithdrawType::Bonded => {
-            assert!(amount.is_some());
-
-            req.accounts(accounts::WithdrawBonded {
-                authority: signer.pubkey(),
-                stake_pool: *pool,
-                token_receiver: token_closer,
-                stake_pool_vault,
-                token_program,
-            })
-            .args(instruction::WithdrawBonded {
-                amount: amount.unwrap(),
-            })
-        }
-        WithdrawType::Unbonded => {
-            assert!(unbonding_account.is_some());
-
-            let stake_account = find_stake_account_address(pool, &signer.pubkey(), &program.id());
-
-            let rent_closer = match rent_receiver {
-                Some(pk) => *pk,
-                None => signer.pubkey(),
-            };
-
-            req.accounts(accounts::WithdrawUnbonded {
-                owner: signer.pubkey(),
-                closer: rent_closer,
-                token_receiver: token_closer,
-                stake_account,
-                stake_pool: *pool,
-                stake_pool_vault,
-                unbonding_account: unbonding_account.unwrap(),
-                token_program,
-            })
-            .args(instruction::WithdrawUnbonded {})
-        }
-    };
-
-    sp.stop_with_message("✅ Required accounts found".into());
-
-    sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
-
-    // Finalize and send the `jet_staking::instruction::WithdrawXXX` transaction
-    let signature = req.signer(signer.as_ref()).send()?;
+    // Build and send the `jet_staking::instruction::WithdrawUnbonded` transaction
+    let signature = program
+        .request()
+        .accounts(accounts::WithdrawUnbonded {
+            owner: signer.pubkey(),
+            closer: rent_closer,
+            token_receiver: token_closer,
+            stake_account,
+            stake_pool: *pool,
+            stake_pool_vault,
+            unbonding_account: *unbonding_account,
+            token_program,
+        })
+        .args(instruction::WithdrawUnbonded {})
+        .signer(signer.as_ref())
+        .send()?;
 
     sp.stop_with_message("✅ Transaction confirmed!\n".into());
 
