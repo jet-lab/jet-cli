@@ -12,6 +12,22 @@
 /// let stake_account = find_staking_address(&pool, &owner);
 /// assert_exists!(program, jet_staking::state::StakeAccount, &stake_account);
 /// ```
+///
+/// You can also provide a fallback block of code to execute in-place
+/// of throwing an error on a bad assertion:
+///
+/// ```
+/// let program = program_client!(config, jet_staking::ID);
+/// let stake_account = find_staking_address(&pool, &owner);
+/// assert_exists!(
+///     program,
+///     jet_staking::state::StakeAccount,
+///     &stake_account,
+///     {
+///         println!("my fallback code block");
+///     },
+/// );
+/// ```
 macro_rules! assert_exists {
     ($program:ident, $acc_type:ty, $pubkey:expr $(,)?) => {{
         let __client = $program.rpc();
@@ -22,6 +38,20 @@ macro_rules! assert_exists {
                 std::any::type_name::<$acc_type>(),
                 $pubkey
             ));
+        }
+    }};
+
+    ($program:ident, $acc_type:ty, $pubkey:expr, $fallback:block $(,)?) => {{
+        let __client = $program.rpc();
+        let __acc_info = __client.get_account_with_commitment($pubkey, __client.commitment())?;
+        if __acc_info.value.is_none() {
+            eprintln!(
+                "{} {} does not exist",
+                std::any::type_name::<$acc_type>(),
+                $pubkey,
+            );
+
+            $fallback
         }
     }};
 }
@@ -40,6 +70,22 @@ pub(crate) use assert_exists;
 /// let stake_account = find_staking_address(&pool, &owner);
 /// assert_not_exists!(program, jet_staking::state::StakeAccount, &stake_account);
 /// ```
+///
+/// You can also provide a fallback block of code to execute in-place
+/// of throwing an error on a bad assertion:
+///
+/// ```
+/// let program = program_client!(config, jet_staking::ID);
+/// let stake_account = find_staking_address(&pool, &owner);
+/// assert_not_exists!(
+///     program,
+///     jet_staking::state::StakeAccount,
+///     &stake_account,
+///     {
+///         println!("my fallback code block");
+///     },
+/// );
+/// ```
 macro_rules! assert_not_exists {
     ($program:ident, $acc_type:ty, $pubkey:expr $(,)?) => {{
         let __client = $program.rpc();
@@ -52,6 +98,20 @@ macro_rules! assert_not_exists {
             ));
         }
     }};
+
+    ($program:ident, $acc_type:ty, $pubkey:expr, $fallback:block $(,)?) => {{
+        let __client = $program.rpc();
+        let __acc_info = __client.get_account_with_commitment($pubkey, __client.commitment())?;
+        if __acc_info.value.is_none() {
+            eprintln!(
+                "{} {} already exists",
+                std::any::type_name::<$acc_type>(),
+                $pubkey,
+            );
+
+            $fallback
+        }
+    }};
 }
 pub(crate) use assert_not_exists;
 
@@ -62,7 +122,7 @@ pub(crate) use assert_not_exists;
 /// # Example
 ///
 /// ```
-/// let realm_data = fetch_realm!(program, &jet_staking::spl_governance::ID, &realm_pubkey)?;
+/// let realm_data = fetch_realm!(program, &jet_staking::spl_governance::ID, &realm_pubkey);
 /// ```
 macro_rules! fetch_realm {
     ($program:ident, $gov_program_id:expr, $pk:expr $(,)?) => {{
@@ -90,7 +150,7 @@ macro_rules! fetch_realm {
                 false,
                 __realm_account.value.as_ref().unwrap().rent_epoch,
             ),
-        )
+        )?
     }};
 }
 pub(crate) use fetch_realm;

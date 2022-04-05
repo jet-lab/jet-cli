@@ -1,5 +1,4 @@
 use anchor_client::anchor_lang::ToAccountMetas;
-use anchor_client::solana_sdk::commitment_config::CommitmentConfig;
 use anchor_client::solana_sdk::instruction::Instruction;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Signer;
@@ -117,26 +116,19 @@ fn add_stake(
 
     let mut req = program.request();
 
-    assert_exists!(program, AssociatedToken, &voter_token_account);
-
-    if program
-        .rpc()
-        .get_account_with_commitment(&voter_token_account, CommitmentConfig::confirmed())?
-        .value
-        .is_none()
-    {
+    assert_exists!(program, AssociatedToken, &voter_token_account, {
         req = req.instruction(create_associated_token_account(
             &signer.pubkey(),
             &signer.pubkey(),
             &stake_vote_mint,
         ));
-    }
+    },);
 
     // Append the instruction for `jet_staking::AddStake` to the transaction
     req = req.instruction(add_stake_ix);
 
     // Read and deserialize the realm account bytes from on-chain
-    let realm_data = fetch_realm!(program, &jet_spl_governance::ID, realm)?;
+    let realm_data = fetch_realm!(program, &jet_spl_governance::ID, realm);
 
     // Derive the public keys for the governance token owner record
     // and the relevant governance token vault accounts.
@@ -218,6 +210,7 @@ fn close_account(
             closer,
             stake_account,
         })
+        .args(args::CloseStakeAccount {})
         .signer(signer.as_ref())
         .send()?;
 
@@ -259,6 +252,7 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey, pool: &Pubkey
             payer: signer.pubkey(),
             system_program: system_program::ID,
         })
+        .args(args::InitStakeAccount {})
         .signer(signer.as_ref())
         .send()?;
 
