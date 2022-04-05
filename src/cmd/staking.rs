@@ -49,16 +49,16 @@ pub enum Command {
 
 /// The main entry point and handler for all staking
 /// program interaction commands.
-pub fn entry(cfg: &ConfigOverride, subcmd: &Command) -> Result<()> {
+pub fn entry(cfg: &ConfigOverride, program: &Pubkey, subcmd: &Command) -> Result<()> {
     match subcmd {
         Command::Add {
             amount,
             pool,
             realm,
             token_account,
-        } => add_stake(cfg, amount, pool, realm, token_account),
-        Command::CloseAccount { pool, receiver } => close_account(cfg, pool, receiver),
-        Command::CreateAccount { pool } => create_account(cfg, pool),
+        } => add_stake(cfg, program, amount, pool, realm, token_account),
+        Command::CloseAccount { pool, receiver } => close_account(cfg, program, pool, receiver),
+        Command::CreateAccount { pool } => create_account(cfg, program, pool),
     }
 }
 
@@ -66,6 +66,7 @@ pub fn entry(cfg: &ConfigOverride, subcmd: &Command) -> Result<()> {
 /// stake to their designated staking account from an owned token account.
 fn add_stake(
     overrides: &ConfigOverride,
+    program: &Pubkey,
     amount: &Option<u64>,
     pool: &Pubkey,
     realm: &Pubkey,
@@ -74,7 +75,7 @@ fn add_stake(
     let config = overrides.transform()?;
     request_approval(&config)?;
 
-    let (program, signer) = program_client!(config, jet_staking::ID);
+    let (program, signer) = program_client!(config, *program);
 
     let mut sp = Spinner::new(Spinners::Dots, "Finding stake account and pool".into());
 
@@ -184,13 +185,14 @@ fn add_stake(
 /// The function handler for a user closing their staking account.
 fn close_account(
     overrides: &ConfigOverride,
+    program: &Pubkey,
     pool: &Pubkey,
     receiver: &Option<Pubkey>,
 ) -> Result<()> {
     let config = overrides.transform()?;
     request_approval(&config)?;
 
-    let (program, signer) = program_client!(config, jet_staking::ID);
+    let (program, signer) = program_client!(config, *program);
 
     // Derive the public key of the `jet_staking::StakeAccount` that
     // is being closed in the instruction call and assert that is exists
@@ -226,11 +228,11 @@ fn close_account(
 
 /// The function handler for the staking subcommand that allows users to create a
 /// new staking account for a designated pool for themselves.
-fn create_account(overrides: &ConfigOverride, pool: &Pubkey) -> Result<()> {
+fn create_account(overrides: &ConfigOverride, program: &Pubkey, pool: &Pubkey) -> Result<()> {
     let config = overrides.transform()?;
     request_approval(&config)?;
 
-    let (program, signer) = program_client!(config, jet_staking::ID);
+    let (program, signer) = program_client!(config, *program);
 
     // Derive the public keys for the user's `jet_auth::UserAuthentication`
     // and `jet_staking::StakeAccount` program accounts and assert that the

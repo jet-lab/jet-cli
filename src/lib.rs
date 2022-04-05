@@ -1,3 +1,4 @@
+use anchor_client::solana_sdk::pubkey::Pubkey;
 use anyhow::Result;
 use clap::{AppSettings, Parser};
 
@@ -27,6 +28,8 @@ pub struct Opts {
 #[derive(Debug, Parser)]
 pub enum Command {
     Staking {
+        #[clap(global = true, long, default_value_t = jet_staking::ID)]
+        program: Pubkey,
         #[clap(subcommand)]
         subcmd: staking::Command,
     },
@@ -36,6 +39,6 @@ pub enum Command {
 /// to the appropriate subcommand entrypoints.
 pub fn run(opts: Opts) -> Result<()> {
     match opts.command {
-        Command::Staking { subcmd } => staking::entry(&opts.cfg, &subcmd),
+        Command::Staking { program, subcmd } => staking::entry(&opts.cfg, &program, &subcmd),
     }
 }

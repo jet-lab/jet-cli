@@ -1,2 +1,4 @@
 .DS_Store
+scripts/*.json
 target/
+test-ledger/
