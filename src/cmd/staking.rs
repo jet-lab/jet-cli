@@ -1,14 +1,15 @@
 use anchor_client::anchor_lang::ToAccountMetas;
-use anchor_client::solana_client::rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType};
 use anchor_client::solana_sdk::commitment_config::CommitmentConfig;
 use anchor_client::solana_sdk::instruction::Instruction;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Signer;
 use anchor_client::solana_sdk::{system_program, sysvar};
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anyhow::Result;
 use clap::Subcommand;
-use jet_staking::{accounts, instruction as args, spl_governance as jet_spl_governance, state};
+use jet_staking::state::{StakeAccount, StakePool};
+use jet_staking::{accounts, instruction as args, spl_governance as jet_spl_governance};
 use spinners::*;
 use spl_associated_token_account::{create_associated_token_account, get_associated_token_address};
 use spl_governance::state::realm::get_realm_data;
@@ -83,17 +84,9 @@ fn add_stake(
     // the existence of the stake account and stake pool program account
     let stake_account = find_stake_account_address(pool, &signer.pubkey(), &program.id());
 
-    assert_pda_exists!(
-        program,
-        Some(vec![RpcFilterType::Memcmp(Memcmp {
-            offset: 8,
-            bytes: MemcmpEncodedBytes::Bytes(signer.pubkey().as_ref().to_vec()),
-            encoding: None,
-        })]),
-        &stake_account,
-    );
+    assert_exists!(program, StakeAccount, &stake_account);
 
-    let state::StakePool {
+    let StakePool {
         stake_pool_vault,
         stake_vote_mint,
         ..
@@ -124,6 +117,8 @@ fn add_stake(
 
     let mut req = program.request();
 
+    assert_exists!(program, AssociatedToken, &voter_token_account);
+
     if program
         .rpc()
         .get_account_with_commitment(&voter_token_account, CommitmentConfig::confirmed())?
@@ -141,7 +136,7 @@ fn add_stake(
     req = req.instruction(add_stake_ix);
 
     // Read and deserialize the realm account bytes from on-chain
-    let realm_data = fetch_realm!(program, realm)?;
+    let realm_data = fetch_realm!(program, &jet_spl_governance::ID, realm)?;
 
     // Derive the public keys for the governance token owner record
     // and the relevant governance token vault accounts.
@@ -206,15 +201,7 @@ fn close_account(
     // is being closed in the instruction call and assert that is exists
     let stake_account = find_stake_account_address(pool, &signer.pubkey(), &program.id());
 
-    assert_pda_exists!(
-        program,
-        Some(vec![RpcFilterType::Memcmp(Memcmp {
-            offset: 8,
-            bytes: MemcmpEncodedBytes::Bytes(signer.pubkey().as_ref().to_vec()),
-            encoding: None,
-        })]),
-        &stake_account,
-    );
+    assert_exists!(program, StakeAccount, &stake_account);
 
     let closer = match receiver {
         Some(pk) => *pk,
@@ -257,15 +244,7 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey, pool: &Pubkey
     let auth = find_auth_address(&signer.pubkey(), &program.id());
     let stake_account = find_stake_account_address(pool, &signer.pubkey(), &program.id());
 
-    assert_pda_not_exists!(
-        program,
-        Some(vec![RpcFilterType::Memcmp(Memcmp {
-            offset: 8,
-            bytes: MemcmpEncodedBytes::Bytes(signer.pubkey().as_ref().to_vec()),
-            encoding: None,
-        })]),
-        &stake_account,
-    );
+    assert_not_exists!(program, StakeAccount, &stake_account);
 
     let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
 

@@ -10,49 +10,22 @@
 /// ```
 /// let program = program_client!(config, jet_staking::ID);
 /// let stake_account = find_staking_address(&pool, &owner);
-/// assert_pda_exists!(
-///     program,
-///     Some(vec![RpcFilterType::Memcmp(Memcmp {
-///         offset: 8,
-///         bytes: MemcmpEncodedBytes::Bytes(signer.pubkey().as_ref().to_vec()),
-///         encoding: None,
-///     })]),
-///     &stake_account,
-/// );
+/// assert_exists!(program, jet_staking::state::StakeAccount, &stake_account);
 /// ```
-macro_rules! assert_pda_exists {
-    ($program:ident, $filters:expr, $pubkey:expr $(,)?) => {{
-        let __config = anchor_client::solana_client::rpc_config::RpcProgramAccountsConfig {
-            account_config: anchor_client::solana_client::rpc_config::RpcAccountInfoConfig {
-                commitment: Some(
-                    anchor_client::solana_sdk::commitment_config::CommitmentConfig::confirmed(),
-                ),
-                data_slice: None,
-                encoding: None,
-            },
-            filters: $filters,
-            with_context: Some(false),
-        };
-
-        let __accs = $program
-            .rpc()
-            .get_program_accounts_with_config(&$program.id(), __config)?;
-
-        if __accs.is_empty()
-            || !__accs
-                .iter()
-                .map(|__a| __a.0)
-                .collect::<Vec<Pubkey>>()
-                .contains($pubkey)
-        {
+macro_rules! assert_exists {
+    ($program:ident, $acc_type:ty, $pubkey:expr $(,)?) => {{
+        let __client = $program.rpc();
+        let __acc_info = __client.get_account_with_commitment($pubkey, __client.commitment())?;
+        if __acc_info.value.is_none() {
             return Err(anyhow::anyhow!(
-                "Program account {} does not exist",
+                "{} {} does not exist",
+                std::any::type_name::<$acc_type>(),
                 $pubkey
             ));
         }
     }};
 }
-pub(crate) use assert_pda_exists;
+pub(crate) use assert_exists;
 
 /// Macro to assert that the argued public key does not exist on chain.
 ///
@@ -65,51 +38,22 @@ pub(crate) use assert_pda_exists;
 /// ```
 /// let program = program_client!(config, jet_staking::ID);
 /// let stake_account = find_staking_address(&pool, &owner);
-/// assert_pda_not_exists!(
-///     program,
-///     Some(vec![RpcFilterType::Memcmp(Memcmp {
-///         offset: 8,
-///         bytes: MemcmpEncodedBytes::Bytes(signer.pubkey().as_ref().to_vec()),
-///         encoding: None,
-///     })]),
-///     &stake_account,
-/// );
+/// assert_not_exists!(program, jet_staking::state::StakeAccount, &stake_account);
 /// ```
-macro_rules! assert_pda_not_exists {
-    ($program:ident, $filters:expr, $pubkey:expr $(,)?) => {{
-        let __config = anchor_client::solana_client::rpc_config::RpcProgramAccountsConfig {
-            account_config: anchor_client::solana_client::rpc_config::RpcAccountInfoConfig {
-                commitment: Some(
-                    anchor_client::solana_sdk::commitment_config::CommitmentConfig::processed(),
-                ),
-                data_slice: None,
-                encoding: None,
-            },
-            filters: $filters,
-            with_context: Some(false),
-        };
-
-        let __accs = $program
-            .rpc()
-            .get_program_accounts_with_config(&$program.id(), __config)?;
-
-        println!("{:?}", __accs);
-
-        if !__accs.is_empty()
-            && __accs
-                .iter()
-                .map(|__a| __a.0)
-                .collect::<Vec<Pubkey>>()
-                .contains($pubkey)
-        {
+macro_rules! assert_not_exists {
+    ($program:ident, $acc_type:ty, $pubkey:expr $(,)?) => {{
+        let __client = $program.rpc();
+        let __acc_info = __client.get_account_with_commitment($pubkey, __client.commitment())?;
+        if __acc_info.value.is_some() {
             return Err(anyhow::anyhow!(
-                "Program account {} already exists",
+                "{} {} already exists",
+                std::any::type_name::<$acc_type>(),
                 $pubkey
             ));
         }
     }};
 }
-pub(crate) use assert_pda_not_exists;
+pub(crate) use assert_not_exists;
 
 /// Macro to read the account of the argued governance realm
 /// public key and deserialize the account data bytes into a usable
@@ -118,22 +62,33 @@ pub(crate) use assert_pda_not_exists;
 /// # Example
 ///
 /// ```
-/// let realm_data = fetch_realm!(program, &realm_pubkey)?;
+/// let realm_data = fetch_realm!(program, &jet_staking::spl_governance::ID, &realm_pubkey)?;
 /// ```
 macro_rules! fetch_realm {
-    ($program:ident, $pk:expr) => {{
-        let mut __realm_account = $program.rpc().get_account($pk)?;
+    ($program:ident, $gov_program_id:expr, $pk:expr $(,)?) => {{
+        let __client = $program.rpc();
+        let mut __realm_account =
+            __client.get_account_with_commitment($pk, __client.commitment())?;
+
+        if __realm_account.value.is_none() {
+            return Err(anyhow::anyhow!(
+                "Error: realm {} not found for program {}",
+                $pk,
+                $gov_program_id,
+            ));
+        }
+
         get_realm_data(
-            &jet_staking::spl_governance::ID,
+            $gov_program_id,
             &anchor_client::solana_sdk::account_info::AccountInfo::new(
                 $pk,
                 false,
                 false,
-                &mut __realm_account.lamports,
-                &mut __realm_account.data,
-                &__realm_account.owner,
+                &mut __realm_account.value.as_ref().unwrap().lamports.clone(),
+                &mut __realm_account.value.as_ref().unwrap().data.clone(),
+                &__realm_account.value.as_ref().unwrap().owner,
                 false,
-                __realm_account.rent_epoch,
+                __realm_account.value.as_ref().unwrap().rent_epoch,
             ),
         )
     }};

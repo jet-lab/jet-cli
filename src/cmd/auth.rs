@@ -1,14 +1,13 @@
-use anchor_client::solana_client::rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType};
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signer::Signer;
 use anchor_client::solana_sdk::system_program;
 use anyhow::Result;
 use clap::Subcommand;
-use jet_auth::accounts;
+use jet_auth::{accounts, instruction as args, UserAuthentication};
 use spinners::*;
 
 use crate::config::ConfigOverride;
-use crate::macros::{assert_pda_not_exists, program_client};
+use crate::macros::{assert_not_exists, program_client};
 use crate::terminal::request_approval;
 
 /// Auth program based subcommand enum variants.
@@ -34,15 +33,7 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey) -> Result<()>
 
     let auth = find_auth_address(&signer.pubkey(), &program.id());
 
-    assert_pda_not_exists!(
-        program,
-        Some(vec![RpcFilterType::Memcmp(Memcmp {
-            offset: 8,
-            bytes: MemcmpEncodedBytes::Bytes(signer.pubkey().as_ref().to_vec()),
-            encoding: None,
-        })]),
-        &auth,
-    );
+    assert_not_exists!(program, UserAuthentication, &auth);
 
     let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
 
@@ -54,6 +45,7 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey) -> Result<()>
             auth,
             system_program: system_program::ID,
         })
+        .args(args::CreateUserAuth {})
         .signer(signer.as_ref())
         .send()?;
 

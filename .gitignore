@@ -1,4 +1,5 @@
 .DS_Store
-scripts/*.json
+authority.json
+user.json
 target/
 test-ledger/
