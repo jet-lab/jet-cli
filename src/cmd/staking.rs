@@ -73,7 +73,7 @@ pub enum Command {
         rent_receiver: Option<Pubkey>,
         #[clap(long)]
         token_receiver: Option<Pubkey>,
-        #[clap(long)]
+        #[clap(long = "account")]
         unbonding_account: Pubkey,
     },
 }
