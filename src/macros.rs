@@ -179,6 +179,34 @@ macro_rules! program_client {
 }
 pub(crate) use program_client;
 
+/// Macro to wrap a sendable transaction expression to be
+/// sent, confirmed and log the signature hash based on the
+/// detected verbosity setting in the exposed configuration.
+///
+/// # Example
+///
+/// ```
+/// send_tx! { |config|
+///     program
+///         .request()
+///         .accounts(accounts::Init {})
+///         .args(instruction::Init {})
+///         .signer(signer.as_ref())
+/// };
+/// ```
+macro_rules! send_tx {
+    (|$cfg:ident| $exec:expr) => {{
+        let __sp = spinners::Spinner::new(spinners::Spinners::Dots, "Sending transaction".into());
+        let __signature = $exec.send()?;
+        __sp.stop_with_message("✅ Transaction confirmed!\n".into());
+
+        if $cfg.verbose {
+            println!("Signature: {}", __signature);
+        }
+    }};
+}
+pub(crate) use send_tx;
+
 #[cfg(test)]
 mod tests {
     use crate::config::Config;

@@ -197,35 +197,28 @@ fn add_stake(
 
     sp.stop_with_message("✅ Instruction bytes compiled".into());
 
-    sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
-
     // Build and send the remaining of the transaction from the
     // `jet_staking::MintVotes` instruction and send it
-    let signature = req
-        .accounts(accounts::MintVotes {
-            owner: signer.pubkey(),
-            stake_pool: *pool,
-            stake_pool_vault,
-            stake_vote_mint,
-            stake_account,
-            voter_token_account,
-            governance_realm: *realm,
-            governance_vault,
-            governance_owner_record,
-            payer: signer.pubkey(),
-            governance_program: jet_spl_governance::ID,
-            token_program,
-            system_program,
-            rent,
-        })
-        .args(instruction::MintVotes { amount: None })
-        .signer(signer.as_ref())
-        .send()?;
-
-    sp.stop_with_message("✅ Transaction confirmed!\n".into());
-
-    if config.verbose {
-        println!("Signature: {}", signature);
+    send_tx! { |config|
+        req
+            .accounts(accounts::MintVotes {
+                owner: signer.pubkey(),
+                stake_pool: *pool,
+                stake_pool_vault,
+                stake_vote_mint,
+                stake_account,
+                voter_token_account,
+                governance_realm: *realm,
+                governance_vault,
+                governance_owner_record,
+                payer: signer.pubkey(),
+                governance_program: jet_spl_governance::ID,
+                token_program,
+                system_program,
+                rent,
+            })
+            .args(instruction::MintVotes { amount: None })
+            .signer(signer.as_ref())
     }
 
     Ok(())
@@ -254,24 +247,17 @@ fn close_account(
         None => signer.pubkey(),
     };
 
-    let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
-
     // Build and send the `jet_staking::CloseStakeAccount` transaction
-    let signature = program
-        .request()
-        .accounts(accounts::CloseStakeAccount {
-            owner: signer.pubkey(),
-            closer,
-            stake_account,
-        })
-        .args(instruction::CloseStakeAccount {})
-        .signer(signer.as_ref())
-        .send()?;
-
-    sp.stop_with_message("✅ Transaction confirmed!\n".into());
-
-    if config.verbose {
-        println!("Signature: {}", signature);
+    send_tx! { |config|
+        program
+            .request()
+            .accounts(accounts::CloseStakeAccount {
+                owner: signer.pubkey(),
+                closer,
+                stake_account,
+            })
+            .args(instruction::CloseStakeAccount {})
+            .signer(signer.as_ref())
     }
 
     Ok(())
@@ -293,27 +279,20 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey, pool: &Pubkey
 
     assert_not_exists!(program, StakeAccount, &stake_account);
 
-    let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
-
     // Build and send the `jet_staking::InitStakeAccount` transaction
-    let signature = program
-        .request()
-        .accounts(accounts::InitStakeAccount {
-            owner: signer.pubkey(),
-            auth,
-            stake_pool: *pool,
-            stake_account,
-            payer: signer.pubkey(),
-            system_program,
-        })
-        .args(instruction::InitStakeAccount {})
-        .signer(signer.as_ref())
-        .send()?;
-
-    sp.stop_with_message("✅ Transaction confirmed!\n".into());
-
-    if config.verbose {
-        println!("Signature: {}\n", signature);
+    send_tx! { |config|
+        program
+            .request()
+            .accounts(accounts::InitStakeAccount {
+                owner: signer.pubkey(),
+                auth,
+                stake_pool: *pool,
+                stake_account,
+                payer: signer.pubkey(),
+                system_program,
+            })
+            .args(instruction::InitStakeAccount {})
+            .signer(signer.as_ref())
     }
 
     println!("Pubkey: {}", stake_account);
@@ -347,29 +326,26 @@ fn create_pool(
     assert_not_exists!(program, StakePool, &pool);
 
     // Build and send the `jet_staking::instruction::InitPool` transaction
-    let signature = program
-        .request()
-        .accounts(accounts::InitPool {
-            payer: signer.pubkey(),
-            authority: signer.pubkey(),
-            token_mint: *token_mint,
-            stake_pool: pool,
-            stake_vote_mint: vote_mint,
-            stake_collateral_mint: collateral_mint,
-            stake_pool_vault: vault,
-            token_program,
-            system_program,
-            rent,
-        })
-        .args(instruction::InitPool {
-            seed,
-            config: PoolConfig { unbond_period },
-        })
-        .signer(signer.as_ref())
-        .send()?;
-
-    if config.verbose {
-        println!("Signature: {}\n", signature);
+    send_tx! { |config|
+        program
+            .request()
+            .accounts(accounts::InitPool {
+                payer: signer.pubkey(),
+                authority: signer.pubkey(),
+                token_mint: *token_mint,
+                stake_pool: pool,
+                stake_vote_mint: vote_mint,
+                stake_collateral_mint: collateral_mint,
+                stake_pool_vault: vault,
+                token_program,
+                system_program,
+                rent,
+            })
+            .args(instruction::InitPool {
+                seed,
+                config: PoolConfig { unbond_period },
+            })
+            .signer(signer.as_ref())
     }
 
     Ok(())
@@ -394,30 +370,23 @@ fn withdraw_bonded(
         None => signer.pubkey(),
     };
 
-    let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
-
     let StakePool {
         stake_pool_vault, ..
     } = program.account(*pool)?;
 
     // Build and send the `jet_staking::instruction::WithdrawBonded` transaction
-    let signature = program
-        .request()
-        .accounts(accounts::WithdrawBonded {
-            authority: signer.pubkey(),
-            stake_pool: *pool,
-            token_receiver,
-            stake_pool_vault,
-            token_program,
-        })
-        .args(instruction::WithdrawBonded { amount })
-        .signer(signer.as_ref())
-        .send()?;
-
-    sp.stop_with_message("✅ Transaction confirmed!\n".into());
-
-    if config.verbose {
-        println!("Signature: {}", signature);
+    send_tx! { |config|
+        program
+            .request()
+            .accounts(accounts::WithdrawBonded {
+                authority: signer.pubkey(),
+                stake_pool: *pool,
+                token_receiver,
+                stake_pool_vault,
+                token_program,
+            })
+            .args(instruction::WithdrawBonded { amount })
+            .signer(signer.as_ref())
     }
 
     Ok(())
@@ -450,33 +419,26 @@ fn withdraw_unbonded(
         None => signer.pubkey(),
     };
 
-    let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
-
     let StakePool {
         stake_pool_vault, ..
     } = program.account(*pool)?;
 
     // Build and send the `jet_staking::instruction::WithdrawUnbonded` transaction
-    let signature = program
-        .request()
-        .accounts(accounts::WithdrawUnbonded {
-            owner: signer.pubkey(),
-            closer: rent_closer,
-            token_receiver: token_closer,
-            stake_account,
-            stake_pool: *pool,
-            stake_pool_vault,
-            unbonding_account: *unbonding_account,
-            token_program,
-        })
-        .args(instruction::WithdrawUnbonded {})
-        .signer(signer.as_ref())
-        .send()?;
-
-    sp.stop_with_message("✅ Transaction confirmed!\n".into());
-
-    if config.verbose {
-        println!("Signature: {}", signature);
+    send_tx! { |config|
+        program
+            .request()
+            .accounts(accounts::WithdrawUnbonded {
+                owner: signer.pubkey(),
+                closer: rent_closer,
+                token_receiver: token_closer,
+                stake_account,
+                stake_pool: *pool,
+                stake_pool_vault,
+                unbonding_account: *unbonding_account,
+                token_program,
+            })
+            .args(instruction::WithdrawUnbonded {})
+            .signer(signer.as_ref())
     }
 
     Ok(())

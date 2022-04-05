@@ -4,10 +4,9 @@ use anchor_client::solana_sdk::system_program::ID as system_program;
 use anyhow::Result;
 use clap::Subcommand;
 use jet_auth::{accounts, instruction, UserAuthentication};
-use spinners::*;
 
 use crate::config::ConfigOverride;
-use crate::macros::{assert_not_exists, program_client};
+use crate::macros::*;
 use crate::pubkey::find_auth_address;
 use crate::terminal::request_approval;
 
@@ -39,26 +38,19 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey) -> Result<()>
     let auth = find_auth_address(&signer.pubkey(), &program.id());
     assert_not_exists!(program, UserAuthentication, &auth);
 
-    let sp = Spinner::new(Spinners::Dots, "Sending transaction".into());
-
     // Build and send the `jet_auth::CreateUserAuthentication` transaction
-    let signature = program
-        .request()
-        .accounts(accounts::CreateUserAuthentication {
-            user: signer.pubkey(),
-            payer: signer.pubkey(),
-            auth,
-            system_program,
-        })
-        .args(instruction::CreateUserAuth {})
-        .signer(signer.as_ref())
-        .send()?;
-
-    sp.stop_with_message("✅ Transaction confirmed!\n".into());
-
-    if config.verbose {
-        println!("Signature: {}\n", signature);
-    }
+    send_tx! { |config|
+        program
+            .request()
+            .accounts(accounts::CreateUserAuthentication {
+                user: signer.pubkey(),
+                payer: signer.pubkey(),
+                auth,
+                system_program,
+            })
+            .args(instruction::CreateUserAuth {})
+            .signer(signer.as_ref())
+    };
 
     println!("Pubkey: {}", auth);
 

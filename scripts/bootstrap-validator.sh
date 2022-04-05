@@ -2,7 +2,6 @@
 
 GOVERNANCE_REPO_PATH=""
 PROGRAM_TO_DEPLOY=""
-RESET_LEDGER="0"
 
 function validate_repo_path {
   if [ -z "$GOVERNANCE_REPO_PATH" ]; then
@@ -45,11 +44,6 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
 
-    --reset)
-      RESET_LEDGER="1"
-      shift 1
-      ;;
-
     *)
       break
       ;;
@@ -59,22 +53,17 @@ done
 validate_repo_path
 validate_program
 
-if [ "$RESET_LEDGER" == "1" ]; then
-  rm -rf ./test-ledger
+solana-keygen new \
+  --no-bip39-passphrase \
+  --outfile ./authority.json \
+  --silent \
+  --force
 
-  solana-keygen new \
-    --no-bip39-passphrase \
-    --outfile ./authority.json \
-    --silent \
-    --force
-
-  solana-keygen new \
-    --no-bip39-passphrase \
-    --outfile ./user.json \
-    --silent \
-    --force
-fi
-
+solana-keygen new \
+  --no-bip39-passphrase \
+  --outfile ./user.json \
+  --silent \
+  --force
 
 solana airdrop -u l 50 $(solana-keygen pubkey ./authority.json)
 solana airdrop -u l 10 $(solana-keygen pubkey ./user.json)
