@@ -1,5 +1,32 @@
 use anyhow::{anyhow, Result};
 use dialoguer::Confirm;
+use indicatif::{ProgressBar, ProgressStyle};
+use std::borrow::Cow;
+
+#[derive(Debug)]
+pub struct Spinner(ProgressBar);
+
+impl Spinner {
+    pub fn new(msg: impl Into<Cow<'static, str>>) -> Self {
+        let pb = ProgressBar::new_spinner();
+        pb.enable_steady_tick(80);
+
+        pb.set_style(
+            ProgressStyle::default_spinner()
+                .template("{spinner:.blue} {msg}")
+                .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]),
+        );
+
+        pb.set_message(msg);
+        Self(pb)
+    }
+
+    pub fn finish_with_message(&self, msg: impl Into<Cow<'static, str>>) {
+        self.0
+            .set_style(ProgressStyle::default_spinner().template("✅ {msg}"));
+        self.0.finish_with_message(msg);
+    }
+}
 
 /// Provides the user a confirmation `(y/N)` option in their terminal
 /// to request approval to sign and send the compiled transaction(s)

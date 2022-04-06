@@ -123,7 +123,7 @@ macro_rules! fetch_realm {
 
         if __realm_account.value.is_none() {
             return Err(anyhow::anyhow!(
-                "Error: realm {} not found for program {}",
+                "realm {} not found for program {}",
                 $pk,
                 $gov_program_id,
             ));
@@ -187,9 +187,9 @@ pub(crate) use program_client;
 /// ```
 macro_rules! send_tx {
     (|$cfg:ident| $exec:expr) => {{
-        let __sp = spinners::Spinner::new(spinners::Spinners::Dots, "Sending transaction".into());
+        let __sp = crate::terminal::Spinner::new("Sending transaction");
         let __signature = $exec.send()?;
-        __sp.stop_with_message("✅ Transaction confirmed!\n".into());
+        __sp.finish_with_message("Transaction confirmed!");
 
         if $cfg.verbose {
             println!("Signature: {}", __signature);

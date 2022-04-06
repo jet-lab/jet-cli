@@ -5,11 +5,10 @@ use anchor_client::solana_sdk::signature::Signer;
 use anchor_client::solana_sdk::system_program::ID as system_program;
 use anchor_client::solana_sdk::sysvar::rent::ID as rent;
 use anchor_spl::token::ID as token_program;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::Subcommand;
 use jet_staking::state::{StakeAccount, StakePool};
 use jet_staking::{accounts, instruction, spl_governance as jet_spl_governance, PoolConfig};
-use spinners::*;
 use spl_associated_token_account::{create_associated_token_account, get_associated_token_address};
 use spl_governance::state::realm::get_realm_data;
 use spl_governance::state::token_owner_record::get_token_owner_record_address;
@@ -18,7 +17,7 @@ use crate::accounts::account_exists;
 use crate::config::ConfigOverride;
 use crate::macros::*;
 use crate::pubkey::*;
-use crate::terminal::request_approval;
+use crate::terminal::{request_approval, Spinner};
 
 /// Staking program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -127,18 +126,20 @@ fn add_stake(
 
     let mut ix_names = Vec::<&str>::new();
 
-    let mut sp = Spinner::new(Spinners::Dots, "Finding stake pool accounts".into());
+    let mut sp = Spinner::new("Finding stake pool accounts");
 
     let StakePool {
         stake_pool_vault,
         stake_vote_mint,
         token_mint,
         ..
-    } = program.account(*pool)?;
+    } = program.account(*pool).map_err(|_e| {
+        return anyhow!("jet_staking::StakePool {} does not exist", pool);
+    })?;
 
-    sp.stop_with_message("✅ Stake pools accounts retrieved".into());
+    sp.finish_with_message("Stake pool accounts retrieved");
 
-    sp = Spinner::new(Spinners::Dots, "Parsing governance realm data".into());
+    sp = Spinner::new("Parsing governance realm data");
 
     let realm_data = fetch_realm!(program, &jet_spl_governance::ID, realm);
 
@@ -151,13 +152,13 @@ fn add_stake(
 
     let governance_vault = derive_governance_vault(realm, &realm_data.community_mint);
 
-    sp.stop_with_message("✅ Realm discovered".into());
+    sp.finish_with_message("Realm discovered");
 
     let payer_token_account = get_associated_token_address(&signer.pubkey(), &token_mint);
     let voter_token_account = get_associated_token_address(&signer.pubkey(), &stake_vote_mint);
     let stake_account = derive_stake_account(pool, &signer.pubkey(), &program.id());
 
-    sp = Spinner::new(Spinners::Dots, "Preprending required instructions".into());
+    sp = Spinner::new("Preprending required instructions");
 
     if !account_exists(&program, &voter_token_account)? {
         req = req.instruction(create_associated_token_account(
@@ -237,7 +238,7 @@ fn add_stake(
 
     ix_names.push("token_program::CloseAccount");
 
-    sp.stop_with_message("✅ Instruction bytes compiled".into());
+    sp.finish_with_message("Instruction bytes compiled");
 
     request_approval(config.auto_approved, Some(ix_names))?;
 
