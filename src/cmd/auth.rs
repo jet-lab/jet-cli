@@ -7,7 +7,7 @@ use jet_auth::{accounts, instruction, UserAuthentication};
 
 use crate::config::ConfigOverride;
 use crate::macros::*;
-use crate::pubkey::find_auth_address;
+use crate::pubkey::derive_auth_account;
 use crate::terminal::request_approval;
 
 /// Auth program based subcommand enum variants.
@@ -29,14 +29,14 @@ pub fn entry(cfg: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Res
 /// users to create a new authentication account for themselves.
 fn create_account(overrides: &ConfigOverride, program_id: &Pubkey) -> Result<()> {
     let config = overrides.transform()?;
-    request_approval(&config)?;
+    request_approval(config.auto_approved, None)?;
 
     let (program, signer) = program_client!(config, *program_id);
 
     // Derive the public key of the new authentication account
     // and ensure that it does not already exist
-    let auth = find_auth_address(&signer.pubkey(), &program.id());
-    assert_not_exists!(program, UserAuthentication, &auth);
+    let auth = derive_auth_account(&signer.pubkey(), &program.id());
+    assert_not_exists!(&program, UserAuthentication, &auth);
 
     // Build and send the `jet_auth::CreateUserAuthentication` transaction
     send_tx! { |config|

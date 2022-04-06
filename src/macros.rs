@@ -29,10 +29,8 @@
 /// );
 /// ```
 macro_rules! assert_exists {
-    ($program:ident, $acc_type:ty, $pubkey:expr $(,)?) => {{
-        let __client = $program.rpc();
-        let __acc_info = __client.get_account_with_commitment($pubkey, __client.commitment())?;
-        if __acc_info.value.is_none() {
+    ($program:expr, $acc_type:ty, $pubkey:expr $(,)?) => {{
+        if !crate::accounts::account_exists($program, $pubkey)? {
             return Err(anyhow::anyhow!(
                 "{} {} does not exist",
                 std::any::type_name::<$acc_type>(),
@@ -41,16 +39,13 @@ macro_rules! assert_exists {
         }
     }};
 
-    ($program:ident, $acc_type:ty, $pubkey:expr, $fallback:block $(,)?) => {{
-        let __client = $program.rpc();
-        let __acc_info = __client.get_account_with_commitment($pubkey, __client.commitment())?;
-        if __acc_info.value.is_none() {
+    ($program:expr, $acc_type:ty, $pubkey:expr, $fallback:block $(,)?) => {{
+        if !crate::accounts::account_exists($program, $pubkey)? {
             eprintln!(
                 "{} {} does not exist",
                 std::any::type_name::<$acc_type>(),
                 $pubkey,
             );
-
             $fallback
         }
     }};
@@ -87,10 +82,8 @@ pub(crate) use assert_exists;
 /// );
 /// ```
 macro_rules! assert_not_exists {
-    ($program:ident, $acc_type:ty, $pubkey:expr $(,)?) => {{
-        let __client = $program.rpc();
-        let __acc_info = __client.get_account_with_commitment($pubkey, __client.commitment())?;
-        if __acc_info.value.is_some() {
+    ($program:expr, $acc_type:ty, $pubkey:expr $(,)?) => {{
+        if crate::accounts::account_exists($program, $pubkey)? {
             return Err(anyhow::anyhow!(
                 "{} {} already exists",
                 std::any::type_name::<$acc_type>(),
@@ -99,10 +92,8 @@ macro_rules! assert_not_exists {
         }
     }};
 
-    ($program:ident, $acc_type:ty, $pubkey:expr, $fallback:block $(,)?) => {{
-        let __client = $program.rpc();
-        let __acc_info = __client.get_account_with_commitment($pubkey, __client.commitment())?;
-        if __acc_info.value.is_none() {
+    ($program:expr, $acc_type:ty, $pubkey:expr, $fallback:block $(,)?) => {{
+        if crate::accounts::account_exists($program, $pubkey)? {
             eprintln!(
                 "{} {} already exists",
                 std::any::type_name::<$acc_type>(),

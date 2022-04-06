@@ -1,8 +1,6 @@
 use anyhow::{anyhow, Result};
 use dialoguer::Confirm;
 
-use crate::config::Config;
-
 /// Provides the user a confirmation `(y/N)` option in their terminal
 /// to request approval to sign and send the compiled transaction(s)
 /// using the configured keypair that was discovered or pointed to
@@ -10,8 +8,16 @@ use crate::config::Config;
 ///
 /// This should be called prior to sending any transactions on
 /// behalf of the end user.
-pub fn request_approval(cfg: &Config) -> Result<()> {
-    if cfg.auto_approved {
+pub fn request_approval(auto_approved: bool, ixs: Option<Vec<&str>>) -> Result<()> {
+    if let Some(names) = ixs {
+        println!("Instructions to be processed:");
+        for (i, ix) in names.iter().enumerate() {
+            println!("[{}] {}", i, *ix);
+        }
+        println!();
+    }
+
+    if auto_approved {
         return Ok(());
     }
 
