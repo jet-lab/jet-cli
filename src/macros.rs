@@ -106,46 +106,6 @@ macro_rules! assert_not_exists {
 }
 pub(crate) use assert_not_exists;
 
-/// Macro to read the account of the argued governance realm
-/// public key and deserialize the account data bytes into a usable
-/// instance of the `spl_governance::state::realm::Realm` struct.
-///
-/// # Example
-///
-/// ```
-/// let realm_data = fetch_realm!(program, &jet_staking::spl_governance::ID, &realm_pubkey);
-/// ```
-macro_rules! fetch_realm {
-    ($program:ident, $gov_program_id:expr, $pk:expr $(,)?) => {{
-        let __client = $program.rpc();
-        let mut __realm_account =
-            __client.get_account_with_commitment($pk, __client.commitment())?;
-
-        if __realm_account.value.is_none() {
-            return Err(anyhow::anyhow!(
-                "realm {} not found for program {}",
-                $pk,
-                $gov_program_id,
-            ));
-        }
-
-        get_realm_data(
-            $gov_program_id,
-            &anchor_client::solana_sdk::account_info::AccountInfo::new(
-                $pk,
-                false,
-                false,
-                &mut __realm_account.value.as_ref().unwrap().lamports.clone(),
-                &mut __realm_account.value.as_ref().unwrap().data.clone(),
-                &__realm_account.value.as_ref().unwrap().owner,
-                false,
-                __realm_account.value.as_ref().unwrap().rent_epoch,
-            ),
-        )?
-    }};
-}
-pub(crate) use fetch_realm;
-
 /// Macro to handle the instantiation of a program client and
 /// the designating signer keypair for the argued config and program ID.
 ///

@@ -1,16 +1,18 @@
 use anchor_client::anchor_lang::ToAccountMetas;
+use anchor_client::solana_sdk::account_info::AccountInfo;
 use anchor_client::solana_sdk::instruction::Instruction;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Signer;
 use anchor_client::solana_sdk::system_program::ID as system_program;
 use anchor_client::solana_sdk::sysvar::rent::ID as rent;
+use anchor_client::Program;
 use anchor_spl::token::ID as token_program;
 use anyhow::{anyhow, Result};
 use clap::Subcommand;
 use jet_staking::state::{StakeAccount, StakePool};
 use jet_staking::{accounts, instruction, spl_governance as jet_spl_governance, PoolConfig};
 use spl_associated_token_account::{create_associated_token_account, get_associated_token_address};
-use spl_governance::state::realm::get_realm_data;
+use spl_governance::state::realm::{get_realm_data, Realm};
 use spl_governance::state::token_owner_record::get_token_owner_record_address;
 
 use crate::accounts::account_exists;
@@ -82,25 +84,27 @@ pub fn entry(cfg: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Res
             amount,
             pool,
             realm,
-        } => add_stake(cfg, program_id, amount, pool, realm),
-        Command::CloseAccount { pool, receiver } => close_account(cfg, program_id, pool, receiver),
-        Command::CreateAccount { pool } => create_account(cfg, program_id, pool),
+        } => process_add_stake(cfg, program_id, amount, pool, realm),
+        Command::CloseAccount { pool, receiver } => {
+            process_close_account(cfg, program_id, pool, receiver)
+        }
+        Command::CreateAccount { pool } => process_create_account(cfg, program_id, pool),
         Command::CreatePool {
             seed,
             token_mint,
             unbond_period,
-        } => create_pool(cfg, program_id, seed.clone(), token_mint, *unbond_period),
+        } => process_create_pool(cfg, program_id, seed.clone(), token_mint, *unbond_period),
         Command::WithdrawBonded {
             amount,
             pool,
             receiver,
-        } => withdraw_bonded(cfg, program_id, *amount, pool, receiver),
+        } => process_withdraw_bonded(cfg, program_id, *amount, pool, receiver),
         Command::WithdrawUnbonded {
             pool,
             rent_receiver,
             token_receiver,
             unbonding_account,
-        } => withdraw_unbonded(
+        } => process_withdraw_unbonded(
             cfg,
             program_id,
             pool,
@@ -113,35 +117,39 @@ pub fn entry(cfg: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Res
 
 /// The function handler for the staking subcommand that allows users to add
 /// stake to their designated staking account from an owned token account.
-fn add_stake(
+fn process_add_stake(
     overrides: &ConfigOverride,
     program_id: &Pubkey,
     amount: &Option<u64>,
     pool: &Pubkey,
     realm: &Pubkey,
 ) -> Result<()> {
+    // Transform overrides into command configuration and setup
+    // the program client and transaction request instances
     let config = overrides.transform()?;
     let (program, signer) = program_client!(config, *program_id);
     let mut req = program.request();
-
     let mut ix_names = Vec::<&str>::new();
 
+    // Fetch the public keys for the required accounts
+    // from the received stake pool
     let mut sp = Spinner::new("Finding stake pool accounts");
+
+    assert_exists!(&program, StakePool, pool);
 
     let StakePool {
         stake_pool_vault,
         stake_vote_mint,
         token_mint,
         ..
-    } = program.account(*pool).map_err(|_e| {
-        return anyhow!("jet_staking::StakePool {} does not exist", pool);
-    })?;
+    } = program.account(*pool)?;
 
     sp.finish_with_message("Stake pool accounts retrieved");
 
+    //
     sp = Spinner::new("Parsing governance realm data");
 
-    let realm_data = fetch_realm!(program, &jet_spl_governance::ID, realm);
+    let realm_data = parse_realm(&program, realm, &jet_spl_governance::ID)?;
 
     let governance_owner_record = get_token_owner_record_address(
         &jet_spl_governance::ID,
@@ -250,7 +258,7 @@ fn add_stake(
 }
 
 /// The function handler for a user closing their staking account.
-fn close_account(
+fn process_close_account(
     overrides: &ConfigOverride,
     program_id: &Pubkey,
     pool: &Pubkey,
@@ -290,7 +298,11 @@ fn close_account(
 
 /// The function handler for the staking subcommand that allows users to create a
 /// new staking account for a designated pool for themselves.
-fn create_account(overrides: &ConfigOverride, program_id: &Pubkey, pool: &Pubkey) -> Result<()> {
+fn process_create_account(
+    overrides: &ConfigOverride,
+    program_id: &Pubkey,
+    pool: &Pubkey,
+) -> Result<()> {
     let config = overrides.transform()?;
     request_approval(config.auto_approved, None)?;
 
@@ -327,7 +339,7 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey, pool: &Pubkey
 
 /// The function handler for the staking subcommand that allows a user
 /// to create a new staking pool with the appropriate mints from a seed.
-fn create_pool(
+fn process_create_pool(
     overrides: &ConfigOverride,
     program_id: &Pubkey,
     seed: String,
@@ -378,7 +390,7 @@ fn create_pool(
 
 /// The function handler for the staking subcommand that allows users to
 /// withdraw bonded stake from the designated pool.
-fn withdraw_bonded(
+fn process_withdraw_bonded(
     overrides: &ConfigOverride,
     program_id: &Pubkey,
     amount: u64,
@@ -419,7 +431,7 @@ fn withdraw_bonded(
 
 /// The function handler for the staking subcommand that allows users to
 /// withdraw unbonded stake from the designated pool.
-fn withdraw_unbonded(
+fn process_withdraw_unbonded(
     overrides: &ConfigOverride,
     program_id: &Pubkey,
     pool: &Pubkey,
@@ -467,4 +479,36 @@ fn withdraw_unbonded(
     }
 
     Ok(())
+}
+
+/// Reads the account of the argued governance realm
+/// public key and deserialize the account data bytes into a usable
+/// instance of the `spl_governance::state::realm::Realm` struct.
+fn parse_realm(program: &Program, realm: &Pubkey, gov_program: &Pubkey) -> Result<Realm> {
+    let client = program.rpc();
+    let account = client.get_account_with_commitment(realm, client.commitment())?;
+
+    if account.value.is_none() {
+        return Err(anyhow!(
+            "realm {} not found for program {}",
+            realm,
+            gov_program
+        ));
+    }
+
+    let acc_info = account.value.as_ref().unwrap();
+    get_realm_data(
+        gov_program,
+        &AccountInfo::new(
+            realm,
+            false,
+            false,
+            &mut acc_info.lamports.clone(),
+            &mut acc_info.data.clone(),
+            &acc_info.owner,
+            false,
+            acc_info.rent_epoch,
+        ),
+    )
+    .map_err(Into::into)
 }
