@@ -1,3 +1,4 @@
+use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Keypair;
 use anchor_client::Cluster;
 use anyhow::{anyhow, Result};
@@ -28,7 +29,7 @@ pub struct ConfigOverride {
 impl ConfigOverride {
     /// Converts the provided and default command line global options
     /// into the standard configuration for the executed command.
-    pub fn transform(&self) -> Result<Config> {
+    pub fn transform(&self, program_id: Pubkey) -> Result<Config> {
         let normalized_path = if self.keypair_path.starts_with('~') {
             PathBuf::from(shellexpand::tilde(&self.keypair_path).to_string())
         } else {
@@ -48,6 +49,7 @@ impl ConfigOverride {
             cluster: self.url.clone(),
             keypair: Rc::new(keypair),
             keypair_path: normalized_path,
+            program_id,
             verbose: self.verbose,
         })
     }
@@ -61,6 +63,7 @@ pub struct Config {
     pub cluster: Cluster,
     pub keypair: Rc<Keypair>,
     pub keypair_path: PathBuf,
+    pub program_id: Pubkey,
     pub verbose: bool,
 }
 
@@ -74,6 +77,7 @@ impl Default for Config {
             cluster: Cluster::default(),
             keypair: Rc::new(Keypair::new()),
             keypair_path: PathBuf::default(),
+            program_id: Pubkey::default(),
             verbose: bool::default(),
         }
     }
@@ -83,6 +87,7 @@ impl Default for Config {
 mod tests {
     use super::Cluster;
     use super::ConfigOverride;
+    use anchor_client::solana_sdk::pubkey::Pubkey;
 
     #[test]
     fn cfg_transforms_tilde() {
@@ -92,7 +97,7 @@ mod tests {
             url: Cluster::Devnet,
             verbose: false,
         }
-        .transform()
+        .transform(Pubkey::default())
         .unwrap();
 
         assert!(!cfg.keypair_path.starts_with("~"));
@@ -106,7 +111,7 @@ mod tests {
             url: Cluster::Mainnet,
             verbose: false,
         }
-        .transform()
+        .transform(Pubkey::default())
         .unwrap();
 
         assert_eq!(cfg.cluster, Cluster::Mainnet);
@@ -120,7 +125,7 @@ mod tests {
             url: Cluster::Devnet,
             verbose: false,
         }
-        .transform()
+        .transform(Pubkey::default())
         .unwrap();
 
         assert!(cfg.keypair.to_base58_string().len() >= 32);

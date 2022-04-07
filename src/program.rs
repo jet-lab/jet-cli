@@ -17,14 +17,14 @@ pub fn account_exists(program: &Program, public_key: &Pubkey) -> Result<bool> {
 
 /// Handle the instantiation of a program client and the
 /// designating signer keypair for the argued config and program ID.
-pub fn create_program_client(config: &Config, program: Pubkey) -> (Program, Rc<Keypair>) {
+pub fn create_program_client(config: &Config) -> (Program, Rc<Keypair>) {
     (
         Client::new_with_options(
             config.cluster.clone(),
             config.keypair.clone(),
             CommitmentConfig::confirmed(),
         )
-        .program(program),
+        .program(config.program_id),
         config.keypair.clone(),
     )
 }
@@ -60,9 +60,9 @@ mod tests {
     fn program_client_creates_instance() {
         let config = Config::default();
         let signer_pubkey = config.keypair.pubkey();
-        let p = create_program_client(&config, jet_staking::ID);
+        let p = create_program_client(&config);
 
-        assert_eq!(p.0.id(), jet_staking::ID);
+        assert_eq!(p.0.id(), Pubkey::default());
         assert_eq!(p.0.payer(), signer_pubkey);
         assert_eq!(p.1.pubkey(), signer_pubkey);
     }

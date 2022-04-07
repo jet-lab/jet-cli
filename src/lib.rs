@@ -33,13 +33,19 @@ enum Command {
         #[clap(global = true, long, default_value_t = jet_auth::ID)]
         program: Pubkey,
         #[clap(subcommand)]
-        subcmd: auth::Command,
+        subcmd: auth::AuthCommand,
+    },
+    Rewards {
+        #[clap(global = true, long, default_value_t = jet_rewards::ID)]
+        program: Pubkey,
+        #[clap(subcommand)]
+        subcmd: rewards::RewardsCommand,
     },
     Staking {
         #[clap(global = true, long, default_value_t = jet_staking::ID)]
         program: Pubkey,
         #[clap(subcommand)]
-        subcmd: staking::Command,
+        subcmd: staking::StakingCommand,
     },
 }
 
@@ -48,6 +54,7 @@ enum Command {
 pub fn run(opts: Opts) -> Result<()> {
     match opts.command {
         Command::Auth { program, subcmd } => auth::entry(&opts.cfg, &program, &subcmd),
+        Command::Rewards { program, subcmd } => rewards::entry(&opts.cfg, &program, &subcmd),
         Command::Staking { program, subcmd } => staking::entry(&opts.cfg, &program, &subcmd),
     }
 }

@@ -1453,6 +1453,7 @@ dependencies = [
  "dirs",
  "indicatif",
  "jet-proto-auth",
+ "jet-proto-rewards",
  "jet-proto-staking",
  "serde_json",
  "shellexpand",
@@ -1463,15 +1464,41 @@ dependencies = [
 [[package]]
 name = "jet-proto-auth"
 version = "1.0.0"
-source = "git+https://github.com/jet-lab/jet-governance?branch=master#39ed2cd2389eae4006f8c1d63606a0bf39ca4c6a"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#08772104803cd5db11520e5d55683fe07b575993"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
+name = "jet-proto-proc-macros"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7eab4c6fd9509fa9c5e6f329363fe47aa77343a5d0b2f82db5a5a2c1e7e3ef6d"
+dependencies = [
+ "proc-macro2 1.0.36",
+ "quote 1.0.17",
+ "static_assertions",
+ "syn 1.0.90",
+]
+
+[[package]]
+name = "jet-proto-rewards"
+version = "1.0.0"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#08772104803cd5db11520e5d55683fe07b575993"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bitflags",
+ "bytemuck",
+ "jet-proto-proc-macros",
+ "jet-proto-staking",
+ "static_assertions",
+]
+
+[[package]]
 name = "jet-proto-staking"
 version = "1.0.0"
-source = "git+https://github.com/jet-lab/jet-governance?branch=master#39ed2cd2389eae4006f8c1d63606a0bf39ca4c6a"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#08772104803cd5db11520e5d55683fe07b575993"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -3155,6 +3182,12 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
+name = "static_assertions"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "strsim"

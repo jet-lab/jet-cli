@@ -12,24 +12,24 @@ use crate::pubkey::derive_auth_account;
 
 /// Auth program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
-pub enum Command {
+pub enum AuthCommand {
     #[clap(about = "Create a new auth account")]
     CreateAccount {},
 }
 
 /// The main entry point and handler for all auth
 /// program interaction commands.
-pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Result<()> {
-    let cfg = overrides.transform()?;
+pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &AuthCommand) -> Result<()> {
+    let cfg = overrides.transform(*program_id)?;
     match subcmd {
-        Command::CreateAccount {} => create_account(&cfg, program_id),
+        AuthCommand::CreateAccount {} => create_account(&cfg),
     }
 }
 
 /// The function handler for the auth subcommand that allows
 /// users to create a new authentication account for themselves.
-fn create_account(cfg: &Config, program_id: &Pubkey) -> Result<()> {
-    let (program, signer) = create_program_client(cfg, *program_id);
+fn create_account(cfg: &Config) -> Result<()> {
+    let (program, signer) = create_program_client(cfg);
 
     // Derive the public key of the new authentication account
     // and ensure that it does not already exist
