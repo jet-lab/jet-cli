@@ -9,7 +9,7 @@ use super::config::Config;
 use super::terminal::{request_approval, Spinner};
 
 /// Checks whether the account for the argued public key exists.
-pub fn account_exists(program: &Program, public_key: &Pubkey) -> Result<bool> {
+pub(crate) fn account_exists(program: &Program, public_key: &Pubkey) -> Result<bool> {
     let client = program.rpc();
     let info = client.get_account_with_commitment(public_key, client.commitment())?;
     Ok(info.value.is_some())
@@ -17,7 +17,7 @@ pub fn account_exists(program: &Program, public_key: &Pubkey) -> Result<bool> {
 
 /// Handle the instantiation of a program client and the
 /// designating signer keypair for the argued config and program ID.
-pub fn create_program_client(config: &Config) -> (Program, Rc<Keypair>) {
+pub(crate) fn create_program_client(config: &Config) -> (Program, Rc<Keypair>) {
     (
         Client::new_with_options(
             config.cluster.clone(),
@@ -32,7 +32,7 @@ pub fn create_program_client(config: &Config) -> (Program, Rc<Keypair>) {
 /// Wrap a sendable transaction expression to be
 /// sent, confirmed and log the signature hash based on the
 /// detected verbosity setting in the exposed configuration.
-pub fn send_with_approval(
+pub(crate) fn send_with_approval(
     config: &Config,
     req: RequestBuilder,
     ix_names: Option<Vec<&str>>,

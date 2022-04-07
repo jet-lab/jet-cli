@@ -70,6 +70,20 @@ pub struct Config {
     pub verbose: bool,
 }
 
+impl Config {
+    /// Create a new instance of `Config` from another with a different program ID.
+    pub fn from_with_program(other: &Config, program_id: Pubkey) -> Self {
+        Self {
+            auto_approved: other.auto_approved,
+            cluster: other.cluster.clone(),
+            keypair: other.keypair.clone(),
+            keypair_path: other.keypair_path.clone(),
+            program_id,
+            verbose: other.verbose,
+        }
+    }
+}
+
 /// Default implementation for the `Config` struct purposed for
 /// quickly instantiating during the cargo test executions.
 #[cfg(test)]

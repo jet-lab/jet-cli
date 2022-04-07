@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use super::config::Config;
 
 #[derive(Debug)]
-pub struct Spinner(ProgressBar);
+pub(crate) struct Spinner(ProgressBar);
 
 impl Spinner {
     pub fn new(msg: impl Into<Cow<'static, str>>) -> Self {
@@ -37,7 +37,7 @@ impl Spinner {
 ///
 /// This should be called prior to sending any transactions on
 /// behalf of the end user.
-pub fn request_approval(config: &Config, ixs: Option<Vec<&str>>) -> Result<()> {
+pub(crate) fn request_approval(config: &Config, ixs: Option<Vec<&str>>) -> Result<()> {
     if let Some(names) = ixs {
         println!("Instructions to be processed:");
         for (i, ix) in names.iter().enumerate() {
