@@ -30,7 +30,7 @@
 /// ```
 macro_rules! assert_exists {
     ($program:expr, $acc_type:ty, $pubkey:expr $(,)?) => {{
-        if !crate::accounts::account_exists($program, $pubkey)? {
+        if !crate::program::account_exists($program, $pubkey)? {
             return Err(anyhow::anyhow!(
                 "{} {} does not exist",
                 std::any::type_name::<$acc_type>(),
@@ -40,7 +40,7 @@ macro_rules! assert_exists {
     }};
 
     ($program:expr, $acc_type:ty, $pubkey:expr, $fallback:block $(,)?) => {{
-        if !crate::accounts::account_exists($program, $pubkey)? {
+        if !crate::program::account_exists($program, $pubkey)? {
             eprintln!(
                 "{} {} does not exist",
                 std::any::type_name::<$acc_type>(),
@@ -83,7 +83,7 @@ pub(crate) use assert_exists;
 /// ```
 macro_rules! assert_not_exists {
     ($program:expr, $acc_type:ty, $pubkey:expr $(,)?) => {{
-        if crate::accounts::account_exists($program, $pubkey)? {
+        if crate::program::account_exists($program, $pubkey)? {
             return Err(anyhow::anyhow!(
                 "{} {} already exists",
                 std::any::type_name::<$acc_type>(),
@@ -93,7 +93,7 @@ macro_rules! assert_not_exists {
     }};
 
     ($program:expr, $acc_type:ty, $pubkey:expr, $fallback:block $(,)?) => {{
-        if crate::accounts::account_exists($program, $pubkey)? {
+        if crate::program::account_exists($program, $pubkey)? {
             eprintln!(
                 "{} {} already exists",
                 std::any::type_name::<$acc_type>(),
@@ -105,72 +105,3 @@ macro_rules! assert_not_exists {
     }};
 }
 pub(crate) use assert_not_exists;
-
-/// Macro to handle the instantiation of a program client and
-/// the designating signer keypair for the argued config and program ID.
-///
-/// # Example
-///
-/// ```
-/// let program = program_client!(config, jet_staking::ID);
-/// ```
-macro_rules! program_client {
-    ($config:ident, $program:expr) => {{
-        let __payer = std::rc::Rc::new($config.keypair);
-        (
-            anchor_client::Client::new_with_options(
-                $config.cluster,
-                __payer.clone(),
-                anchor_client::solana_sdk::commitment_config::CommitmentConfig::confirmed(),
-            )
-            .program($program),
-            __payer,
-        )
-    }};
-}
-pub(crate) use program_client;
-
-/// Macro to wrap a sendable transaction expression to be
-/// sent, confirmed and log the signature hash based on the
-/// detected verbosity setting in the exposed configuration.
-///
-/// # Example
-///
-/// ```
-/// send_tx! { |config|
-///     program
-///         .request()
-///         .accounts(accounts::Init {})
-///         .args(instruction::Init {})
-///         .signer(signer.as_ref())
-/// };
-/// ```
-macro_rules! send_tx {
-    (|$cfg:ident| $exec:expr) => {{
-        let __sp = crate::terminal::Spinner::new("Sending transaction");
-        let __signature = $exec.send()?;
-        __sp.finish_with_message("Transaction confirmed!");
-
-        if $cfg.verbose {
-            println!("Signature: {}", __signature);
-        }
-    }};
-}
-pub(crate) use send_tx;
-
-#[cfg(test)]
-mod tests {
-    use crate::config::Config;
-    use anchor_client::solana_sdk::signer::Signer;
-
-    #[test]
-    fn program_client_creates_instance() {
-        let config = Config::default();
-        let signer_pubkey = config.keypair.pubkey();
-        let p = program_client!(config, jet_staking::ID);
-
-        assert_eq!(p.0.id(), jet_staking::ID);
-        assert_eq!(p.0.payer(), signer_pubkey);
-        assert_eq!(p.1.pubkey(), signer_pubkey);
-    }
-}

@@ -2,10 +2,10 @@ use anchor_client::solana_sdk::pubkey::Pubkey;
 use anyhow::Result;
 use clap::{AppSettings, Parser};
 
-mod accounts;
 mod cmd;
 mod config;
 mod macros;
+mod program;
 mod pubkey;
 mod terminal;
 

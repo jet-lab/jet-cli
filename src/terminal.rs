@@ -3,6 +3,8 @@ use dialoguer::Confirm;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::borrow::Cow;
 
+use super::config::Config;
+
 #[derive(Debug)]
 pub struct Spinner(ProgressBar);
 
@@ -35,7 +37,7 @@ impl Spinner {
 ///
 /// This should be called prior to sending any transactions on
 /// behalf of the end user.
-pub fn request_approval(auto_approved: bool, ixs: Option<Vec<&str>>) -> Result<()> {
+pub fn request_approval(config: &Config, ixs: Option<Vec<&str>>) -> Result<()> {
     if let Some(names) = ixs {
         println!("Instructions to be processed:");
         for (i, ix) in names.iter().enumerate() {
@@ -44,7 +46,7 @@ pub fn request_approval(auto_approved: bool, ixs: Option<Vec<&str>>) -> Result<(
         println!();
     }
 
-    if auto_approved {
+    if config.auto_approved {
         return Ok(());
     }
 

@@ -4,6 +4,7 @@ use anyhow::{anyhow, Result};
 use clap::Parser;
 use std::fs::read_to_string;
 use std::path::PathBuf;
+use std::rc::Rc;
 
 /// The struct definition of the available global command
 /// options that can be used to override or set standard behavior.
@@ -45,7 +46,7 @@ impl ConfigOverride {
         Ok(Config {
             auto_approved: self.auto_approve,
             cluster: self.url.clone(),
-            keypair,
+            keypair: Rc::new(keypair),
             keypair_path: normalized_path,
             verbose: self.verbose,
         })
@@ -58,7 +59,7 @@ impl ConfigOverride {
 pub struct Config {
     pub auto_approved: bool,
     pub cluster: Cluster,
-    pub keypair: Keypair,
+    pub keypair: Rc<Keypair>,
     pub keypair_path: PathBuf,
     pub verbose: bool,
 }
@@ -71,7 +72,7 @@ impl Default for Config {
         Self {
             auto_approved: bool::default(),
             cluster: Cluster::default(),
-            keypair: Keypair::new(),
+            keypair: Rc::new(Keypair::new()),
             keypair_path: PathBuf::default(),
             verbose: bool::default(),
         }

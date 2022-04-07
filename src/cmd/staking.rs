@@ -15,11 +15,11 @@ use spl_associated_token_account::{create_associated_token_account, get_associat
 use spl_governance::state::realm::{get_realm_data, Realm};
 use spl_governance::state::token_owner_record::get_token_owner_record_address;
 
-use crate::accounts::account_exists;
-use crate::config::ConfigOverride;
+use crate::config::{Config, ConfigOverride};
 use crate::macros::*;
+use crate::program::*;
 use crate::pubkey::*;
-use crate::terminal::{request_approval, Spinner};
+use crate::terminal::Spinner;
 
 /// Staking program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -32,6 +32,8 @@ pub enum Command {
         pool: Pubkey,
         #[clap(long)]
         realm: Pubkey,
+        #[clap(long)]
+        skip_mint_votes: bool,
     },
     #[clap(about = "Close a stake account")]
     CloseAccount {
@@ -78,34 +80,36 @@ pub enum Command {
 
 /// The main entry point and handler for all staking
 /// program interaction commands.
-pub fn entry(cfg: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Result<()> {
+pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Result<()> {
+    let cfg = overrides.transform()?;
     match subcmd {
         Command::Add {
             amount,
             pool,
             realm,
-        } => process_add_stake(cfg, program_id, amount, pool, realm),
+            skip_mint_votes,
+        } => process_add_stake(&cfg, program_id, amount, pool, realm, *skip_mint_votes),
         Command::CloseAccount { pool, receiver } => {
-            process_close_account(cfg, program_id, pool, receiver)
+            process_close_account(&cfg, program_id, pool, receiver)
         }
-        Command::CreateAccount { pool } => process_create_account(cfg, program_id, pool),
+        Command::CreateAccount { pool } => process_create_account(&cfg, program_id, pool),
         Command::CreatePool {
             seed,
             token_mint,
             unbond_period,
-        } => process_create_pool(cfg, program_id, seed.clone(), token_mint, *unbond_period),
+        } => process_create_pool(&cfg, program_id, seed.clone(), token_mint, *unbond_period),
         Command::WithdrawBonded {
             amount,
             pool,
             receiver,
-        } => process_withdraw_bonded(cfg, program_id, *amount, pool, receiver),
+        } => process_withdraw_bonded(&cfg, program_id, *amount, pool, receiver),
         Command::WithdrawUnbonded {
             pool,
             rent_receiver,
             token_receiver,
             unbonding_account,
         } => process_withdraw_unbonded(
-            cfg,
+            &cfg,
             program_id,
             pool,
             rent_receiver,
@@ -118,16 +122,14 @@ pub fn entry(cfg: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Res
 /// The function handler for the staking subcommand that allows users to add
 /// stake to their designated staking account from an owned token account.
 fn process_add_stake(
-    overrides: &ConfigOverride,
+    cfg: &Config,
     program_id: &Pubkey,
     amount: &Option<u64>,
     pool: &Pubkey,
     realm: &Pubkey,
+    skip_mint_votes: bool,
 ) -> Result<()> {
-    // Transform overrides into command configuration and setup
-    // the program client and transaction request instances
-    let config = overrides.transform()?;
-    let (program, signer) = program_client!(config, *program_id);
+    let (program, signer) = create_program_client(cfg, *program_id);
     let mut req = program.request();
     let mut ix_names = Vec::<&str>::new();
 
@@ -168,16 +170,6 @@ fn process_add_stake(
 
     sp = Spinner::new("Preprending required instructions");
 
-    if !account_exists(&program, &voter_token_account)? {
-        req = req.instruction(create_associated_token_account(
-            &signer.pubkey(),
-            &signer.pubkey(),
-            &stake_vote_mint,
-        ));
-
-        ix_names.push("associated_token_program::Create");
-    }
-
     if !account_exists(&program, &stake_account)? {
         req = req.instruction(Instruction::new_with_borsh(
             program.id(),
@@ -212,62 +204,65 @@ fn process_add_stake(
 
     ix_names.push("jet_staking::AddStake");
 
-    req = req.instruction(Instruction::new_with_borsh(
-        program.id(),
-        &instruction::MintVotes { amount: None }, // FIXME: amount omitted to do full amount possible (?)
-        accounts::MintVotes {
-            owner: signer.pubkey(),
-            stake_pool: *pool,
-            stake_pool_vault,
-            stake_vote_mint,
-            stake_account,
-            voter_token_account,
-            governance_realm: *realm,
-            governance_vault,
-            governance_owner_record,
-            payer: signer.pubkey(),
-            governance_program: jet_spl_governance::ID,
-            token_program,
-            system_program,
-            rent,
+    if !skip_mint_votes {
+        if !account_exists(&program, &voter_token_account)? {
+            req = req.instruction(create_associated_token_account(
+                &signer.pubkey(),
+                &signer.pubkey(),
+                &stake_vote_mint,
+            ));
+
+            ix_names.push("associated_token_program::Create");
         }
-        .to_account_metas(None),
-    ));
 
-    ix_names.push("jet_staking::MintVotes");
+        req = req.instruction(Instruction::new_with_borsh(
+            program.id(),
+            &instruction::MintVotes { amount: None }, // FIXME: amount omitted to do full amount possible (?)
+            accounts::MintVotes {
+                owner: signer.pubkey(),
+                stake_pool: *pool,
+                stake_pool_vault,
+                stake_vote_mint,
+                stake_account,
+                voter_token_account,
+                governance_realm: *realm,
+                governance_vault,
+                governance_owner_record,
+                payer: signer.pubkey(),
+                governance_program: jet_spl_governance::ID,
+                token_program,
+                system_program,
+                rent,
+            }
+            .to_account_metas(None),
+        ));
 
-    req = req.instruction(anchor_spl::token::spl_token::instruction::close_account(
-        &token_program,
-        &voter_token_account,
-        &signer.pubkey(),
-        &signer.pubkey(),
-        &[&signer.pubkey()],
-    )?);
+        ix_names.push("jet_staking::MintVotes");
 
-    ix_names.push("token_program::CloseAccount");
+        req = req.instruction(anchor_spl::token::spl_token::instruction::close_account(
+            &token_program,
+            &voter_token_account,
+            &signer.pubkey(),
+            &signer.pubkey(),
+            &[&signer.pubkey()],
+        )?);
+
+        ix_names.push("token_program::CloseAccount");
+    }
 
     sp.finish_with_message("Instruction bytes compiled");
 
-    request_approval(config.auto_approved, Some(ix_names))?;
-
-    send_tx! { |config|
-        req.signer(signer.as_ref())
-    }
-
-    Ok(())
+    send_with_approval(cfg, req.signer(signer.as_ref()), Some(ix_names))
 }
 
 /// The function handler for a user closing their staking account.
 fn process_close_account(
-    overrides: &ConfigOverride,
+    cfg: &Config,
     program_id: &Pubkey,
     pool: &Pubkey,
     receiver: &Option<Pubkey>,
 ) -> Result<()> {
-    let config = overrides.transform()?;
-    request_approval(config.auto_approved, None)?;
-
-    let (program, signer) = program_client!(config, *program_id);
+    let (program, signer) = create_program_client(cfg, *program_id);
 
     // Derive the public key of the `jet_staking::StakeAccount` that
     // is being closed in the instruction call and assert that is exists
@@ -281,7 +276,8 @@ fn process_close_account(
     };
 
     // Build and send the `jet_staking::CloseStakeAccount` transaction
-    send_tx! { |config|
+    send_with_approval(
+        cfg,
         program
             .request()
             .accounts(accounts::CloseStakeAccount {
@@ -290,23 +286,15 @@ fn process_close_account(
                 stake_account,
             })
             .args(instruction::CloseStakeAccount {})
-            .signer(signer.as_ref())
-    }
-
-    Ok(())
+            .signer(signer.as_ref()),
+        None,
+    )
 }
 
 /// The function handler for the staking subcommand that allows users to create a
 /// new staking account for a designated pool for themselves.
-fn process_create_account(
-    overrides: &ConfigOverride,
-    program_id: &Pubkey,
-    pool: &Pubkey,
-) -> Result<()> {
-    let config = overrides.transform()?;
-    request_approval(config.auto_approved, None)?;
-
-    let (program, signer) = program_client!(config, *program_id);
+fn process_create_account(cfg: &Config, program_id: &Pubkey, pool: &Pubkey) -> Result<()> {
+    let (program, signer) = create_program_client(cfg, *program_id);
 
     // Derive the public keys for the user's `jet_auth::UserAuthentication`
     // and `jet_staking::StakeAccount` program accounts and assert that the
@@ -317,7 +305,8 @@ fn process_create_account(
     assert_not_exists!(&program, StakeAccount, &stake_account);
 
     // Build and send the `jet_staking::InitStakeAccount` transaction
-    send_tx! { |config|
+    send_with_approval(
+        cfg,
         program
             .request()
             .accounts(accounts::InitStakeAccount {
@@ -329,8 +318,9 @@ fn process_create_account(
                 system_program,
             })
             .args(instruction::InitStakeAccount {})
-            .signer(signer.as_ref())
-    }
+            .signer(signer.as_ref()),
+        None,
+    )?;
 
     println!("Pubkey: {}", stake_account);
 
@@ -340,16 +330,13 @@ fn process_create_account(
 /// The function handler for the staking subcommand that allows a user
 /// to create a new staking pool with the appropriate mints from a seed.
 fn process_create_pool(
-    overrides: &ConfigOverride,
+    cfg: &Config,
     program_id: &Pubkey,
     seed: String,
     token_mint: &Pubkey,
     unbond_period: u64,
 ) -> Result<()> {
-    let config = overrides.transform()?;
-    request_approval(config.auto_approved, None)?;
-
-    let (program, signer) = program_client!(config, *program_id);
+    let (program, signer) = create_program_client(cfg, *program_id);
 
     // Derive the public keys needed for a new staking pool and
     // ensure that the pool address doesn't already exist
@@ -363,7 +350,8 @@ fn process_create_pool(
     assert_not_exists!(&program, StakePool, &pool);
 
     // Build and send the `jet_staking::instruction::InitPool` transaction
-    send_tx! { |config|
+    send_with_approval(
+        cfg,
         program
             .request()
             .accounts(accounts::InitPool {
@@ -382,25 +370,21 @@ fn process_create_pool(
                 seed,
                 config: PoolConfig { unbond_period },
             })
-            .signer(signer.as_ref())
-    }
-
-    Ok(())
+            .signer(signer.as_ref()),
+        None,
+    )
 }
 
 /// The function handler for the staking subcommand that allows users to
 /// withdraw bonded stake from the designated pool.
 fn process_withdraw_bonded(
-    overrides: &ConfigOverride,
+    cfg: &Config,
     program_id: &Pubkey,
     amount: u64,
     pool: &Pubkey,
     receiver: &Option<Pubkey>,
 ) -> Result<()> {
-    let config = overrides.transform()?;
-    request_approval(config.auto_approved, None)?;
-
-    let (program, signer) = program_client!(config, *program_id);
+    let (program, signer) = create_program_client(cfg, *program_id);
 
     let token_receiver = match receiver {
         Some(pk) => *pk,
@@ -412,7 +396,8 @@ fn process_withdraw_bonded(
     } = program.account(*pool)?;
 
     // Build and send the `jet_staking::instruction::WithdrawBonded` transaction
-    send_tx! { |config|
+    send_with_approval(
+        cfg,
         program
             .request()
             .accounts(accounts::WithdrawBonded {
@@ -423,26 +408,22 @@ fn process_withdraw_bonded(
                 token_program,
             })
             .args(instruction::WithdrawBonded { amount })
-            .signer(signer.as_ref())
-    }
-
-    Ok(())
+            .signer(signer.as_ref()),
+        None,
+    )
 }
 
 /// The function handler for the staking subcommand that allows users to
 /// withdraw unbonded stake from the designated pool.
 fn process_withdraw_unbonded(
-    overrides: &ConfigOverride,
+    cfg: &Config,
     program_id: &Pubkey,
     pool: &Pubkey,
     rent_receiver: &Option<Pubkey>,
     token_receiver: &Option<Pubkey>,
     unbonding_account: &Pubkey,
 ) -> Result<()> {
-    let config = overrides.transform()?;
-    request_approval(config.auto_approved, None)?;
-
-    let (program, signer) = program_client!(config, *program_id);
+    let (program, signer) = create_program_client(cfg, *program_id);
 
     let stake_account = derive_stake_account(pool, &signer.pubkey(), &program.id());
 
@@ -461,7 +442,8 @@ fn process_withdraw_unbonded(
     } = program.account(*pool)?;
 
     // Build and send the `jet_staking::instruction::WithdrawUnbonded` transaction
-    send_tx! { |config|
+    send_with_approval(
+        cfg,
         program
             .request()
             .accounts(accounts::WithdrawUnbonded {
@@ -475,10 +457,9 @@ fn process_withdraw_unbonded(
                 token_program,
             })
             .args(instruction::WithdrawUnbonded {})
-            .signer(signer.as_ref())
-    }
-
-    Ok(())
+            .signer(signer.as_ref()),
+        None,
+    )
 }
 
 /// Reads the account of the argued governance realm

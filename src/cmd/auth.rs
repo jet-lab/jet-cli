@@ -5,10 +5,10 @@ use anyhow::Result;
 use clap::Subcommand;
 use jet_auth::{accounts, instruction, UserAuthentication};
 
-use crate::config::ConfigOverride;
+use crate::config::{Config, ConfigOverride};
 use crate::macros::*;
+use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::derive_auth_account;
-use crate::terminal::request_approval;
 
 /// Auth program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -19,19 +19,17 @@ pub enum Command {
 
 /// The main entry point and handler for all auth
 /// program interaction commands.
-pub fn entry(cfg: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Result<()> {
+pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &Command) -> Result<()> {
+    let cfg = overrides.transform()?;
     match subcmd {
-        Command::CreateAccount {} => create_account(cfg, program_id),
+        Command::CreateAccount {} => create_account(&cfg, program_id),
     }
 }
 
 /// The function handler for the auth subcommand that allows
 /// users to create a new authentication account for themselves.
-fn create_account(overrides: &ConfigOverride, program_id: &Pubkey) -> Result<()> {
-    let config = overrides.transform()?;
-    request_approval(config.auto_approved, None)?;
-
-    let (program, signer) = program_client!(config, *program_id);
+fn create_account(cfg: &Config, program_id: &Pubkey) -> Result<()> {
+    let (program, signer) = create_program_client(cfg, *program_id);
 
     // Derive the public key of the new authentication account
     // and ensure that it does not already exist
@@ -39,7 +37,8 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey) -> Result<()>
     assert_not_exists!(&program, UserAuthentication, &auth);
 
     // Build and send the `jet_auth::CreateUserAuthentication` transaction
-    send_tx! { |config|
+    send_with_approval(
+        cfg,
         program
             .request()
             .accounts(accounts::CreateUserAuthentication {
@@ -49,8 +48,9 @@ fn create_account(overrides: &ConfigOverride, program_id: &Pubkey) -> Result<()>
                 system_program,
             })
             .args(instruction::CreateUserAuth {})
-            .signer(signer.as_ref())
-    };
+            .signer(signer.as_ref()),
+        None,
+    )?;
 
     println!("Pubkey: {}", auth);
 
