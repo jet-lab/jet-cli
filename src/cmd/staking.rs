@@ -33,44 +33,58 @@ pub enum StakingCommand {
     },
     /// Close a stake account.
     CloseAccount {
+        /// Stake pool associated with the account.
         #[clap(long)]
         pool: Pubkey,
+        /// (Optional) Wallet receiving the rent funds.
         #[clap(long)]
         receiver: Option<Pubkey>,
     },
     /// Create a new stake account.
     CreateAccount {
+        /// Stake pool to associate the new account.
         #[clap(long)]
         pool: Pubkey,
     },
     /// Create a new staking pool.
     CreatePool {
+        /// Seed for the new stake pool.
         #[clap(long)]
         seed: String,
+        /// Governance realm to associate with the new pool.
         #[clap(long)]
         realm: Pubkey,
+        /// Token mint for the stake pool.
         #[clap(long)]
         token_mint: Pubkey,
+        /// Unbonding period as u64.
         #[clap(long)]
         unbond_period: u64,
     },
     /// Withdraw bonded stake funds from a pool.
     WithdrawBonded {
+        /// Amount of funds to withdraw.
         #[clap(long)]
         amount: u64,
+        /// Stake pool to withdraw.
         #[clap(long)]
         pool: Pubkey,
+        /// (Optional) Wallet to receive the withdrawn funds.
         #[clap(long)]
         receiver: Option<Pubkey>,
     },
     /// Withdraw bonded stake funds from a pool.
     WithdrawUnbonded {
+        /// Stake pool to withdraw.
         #[clap(long)]
         pool: Pubkey,
+        /// (Optional) Wallet to receive the account rent.
         #[clap(long)]
         rent_receiver: Option<Pubkey>,
+        /// (Optional) Wallet to receive withdrawn funds.
         #[clap(long)]
         token_receiver: Option<Pubkey>,
+        /// Public key of the unbonding account.
         #[clap(long = "account")]
         unbonding_account: Pubkey,
     },

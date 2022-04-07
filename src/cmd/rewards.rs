@@ -34,6 +34,8 @@ pub fn entry(
     }
 }
 
+/// The function handler to allow a user to claim a rewards airdrop
+/// that they provide the public key for.
 fn process_claim_airdrop(cfg: &Config, airdrop: &Pubkey) -> Result<()> {
     // Instantiate program clients for both jet_rewards and jet_staking programs
     let (rewards_program, signer) = create_program_client(cfg);
