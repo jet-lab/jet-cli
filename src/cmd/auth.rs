@@ -49,7 +49,7 @@ fn create_account(cfg: &Config) -> Result<()> {
             })
             .args(instruction::CreateUserAuth {})
             .signer(signer.as_ref()),
-        None,
+        Some(vec!["jet_auth::CreateUserAuthentication"]),
     )?;
 
     println!("Pubkey: {}", auth);
