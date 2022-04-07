@@ -24,8 +24,6 @@ use crate::terminal::Spinner;
 /// Staking program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
 pub enum StakingCommand {
-    #[clap(about = "Read the data in a stake account")]
-    Account { stake_account: Pubkey },
     #[clap(about = "Deposit to a stake pool from your account")]
     Add {
         #[clap(long)]
@@ -89,7 +87,6 @@ pub fn entry(
 ) -> Result<()> {
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
-        StakingCommand::Account { stake_account } => process_get_stake_account(&cfg, stake_account),
         StakingCommand::Add {
             amount,
             pool,
@@ -368,14 +365,6 @@ fn process_create_pool(
             .signer(signer.as_ref()),
         None,
     )
-}
-
-/// The function handler for read and parsing the data for the argued stake account public key.
-fn process_get_stake_account(cfg: &Config, account: &Pubkey) -> Result<()> {
-    let (program, _) = create_program_client(cfg);
-    let stake_account = program.account::<StakeAccount>(*account)?;
-    println!("{:?}", stake_account);
-    Ok(())
 }
 
 /// The function handler for the staking subcommand that allows users to
