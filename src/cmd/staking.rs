@@ -1,19 +1,15 @@
 use anchor_client::anchor_lang::ToAccountMetas;
-use anchor_client::solana_sdk::account_info::AccountInfo;
 use anchor_client::solana_sdk::instruction::Instruction;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Signer;
 use anchor_client::solana_sdk::system_program::ID as system_program;
 use anchor_client::solana_sdk::sysvar::rent::ID as rent;
-use anchor_client::Program;
 use anchor_spl::token::ID as token_program;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use clap::Subcommand;
 use jet_staking::state::{StakeAccount, StakePool};
-use jet_staking::{accounts, instruction, spl_governance as jet_spl_governance, PoolConfig};
-use spl_associated_token_account::{create_associated_token_account, get_associated_token_address};
-use spl_governance::state::realm::{get_realm_data, Realm};
-use spl_governance::state::token_owner_record::get_token_owner_record_address;
+use jet_staking::{accounts, instruction, PoolConfig};
+use spl_associated_token_account::get_associated_token_address;
 
 use crate::config::{Config, ConfigOverride};
 use crate::macros::*;
@@ -34,12 +30,6 @@ pub enum StakingCommand {
         /// Stake pool to deposit.
         #[clap(short, long)]
         pool: Pubkey,
-        /// Associated governance realm public key.
-        #[clap(short, long)]
-        realm: Option<Pubkey>,
-        /// Skip the `jet_staking::MintVotes` and associated instructions.
-        #[clap(long, conflicts_with = "realm")]
-        skip_mint_votes: bool,
     },
     /// Close a stake account.
     CloseAccount {
@@ -57,6 +47,8 @@ pub enum StakingCommand {
     CreatePool {
         #[clap(long)]
         seed: String,
+        #[clap(long)]
+        realm: Pubkey,
         #[clap(long)]
         token_mint: Pubkey,
         #[clap(long)]
@@ -93,21 +85,17 @@ pub fn entry(
 ) -> Result<()> {
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
-        StakingCommand::Add {
-            amount,
-            pool,
-            realm,
-            skip_mint_votes,
-        } => process_add_stake(&cfg, amount, pool, realm, *skip_mint_votes),
+        StakingCommand::Add { amount, pool } => process_add_stake(&cfg, amount, pool),
         StakingCommand::CloseAccount { pool, receiver } => {
             process_close_account(&cfg, pool, receiver)
         }
         StakingCommand::CreateAccount { pool } => process_create_account(&cfg, pool),
         StakingCommand::CreatePool {
             seed,
+            realm,
             token_mint,
             unbond_period,
-        } => process_create_pool(&cfg, seed.clone(), token_mint, *unbond_period),
+        } => process_create_pool(&cfg, seed.clone(), realm, token_mint, *unbond_period),
         StakingCommand::WithdrawBonded {
             amount,
             pool,
@@ -126,36 +114,27 @@ pub fn entry(
 
 /// The function handler for the staking subcommand that allows users to add
 /// stake to their designated staking account from an owned token account.
-fn process_add_stake(
-    cfg: &Config,
-    amount: &Option<u64>,
-    pool: &Pubkey,
-    realm: &Option<Pubkey>,
-    skip_mint_votes: bool,
-) -> Result<()> {
+fn process_add_stake(cfg: &Config, amount: &Option<u64>, pool: &Pubkey) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
     let mut req = program.request();
     let mut ix_names = Vec::<&str>::new();
 
-    // Fetch the public keys for the required accounts
-    // from the received stake pool
     let mut sp = Spinner::new("Finding stake pool accounts");
-
     assert_exists!(&program, StakePool, pool);
 
     let StakePool {
         stake_pool_vault,
-        stake_vote_mint,
+        max_voter_weight_record,
         token_mint,
         ..
     } = program.account(*pool)?;
 
     sp.finish_with_message("Stake pool accounts retrieved");
 
+    sp = Spinner::new("Preprending required instructions");
     let payer_token_account = get_associated_token_address(&signer.pubkey(), &token_mint);
     let stake_account = derive_stake_account(pool, &signer.pubkey(), &program.id());
-
-    sp = Spinner::new("Preprending required instructions");
+    let voter_weight_record = derive_voter_weight_record(&stake_account, &program.id());
 
     if !account_exists(&program, &stake_account)? {
         req = req.instruction(Instruction::new_with_borsh(
@@ -163,9 +142,10 @@ fn process_add_stake(
             &instruction::InitStakeAccount {},
             accounts::InitStakeAccount {
                 owner: signer.pubkey(),
-                auth: derive_auth_account(&signer.pubkey(), &jet_auth::ID), // FIXME: genericize auth program ID
+                auth: derive_auth_account(&signer.pubkey(), &jet_auth::ID), // TODO: genericize auth program ID (?)
                 stake_pool: *pool,
                 stake_account,
+                voter_weight_record,
                 payer: signer.pubkey(),
                 system_program,
             }
@@ -184,79 +164,14 @@ fn process_add_stake(
             stake_account,
             payer: signer.pubkey(),
             payer_token_account,
+            voter_weight_record,
+            max_voter_weight_record,
             token_program,
         }
         .to_account_metas(None),
     ));
 
     ix_names.push("jet_staking::AddStake");
-
-    if !skip_mint_votes {
-        let voter_token_account = get_associated_token_address(&signer.pubkey(), &stake_vote_mint);
-
-        if !account_exists(&program, &voter_token_account)? {
-            req = req.instruction(create_associated_token_account(
-                &signer.pubkey(),
-                &signer.pubkey(),
-                &stake_vote_mint,
-            ));
-
-            ix_names.push("associated_token_program::Create");
-        }
-
-        sp = Spinner::new("Parsing governance realm data");
-
-        assert!(realm.is_some());
-
-        let realm_pubkey = realm.as_ref().unwrap();
-        let realm_data = parse_realm(&program, realm_pubkey, &jet_spl_governance::ID)?;
-
-        let governance_owner_record = get_token_owner_record_address(
-            &jet_spl_governance::ID,
-            realm_pubkey,
-            &realm_data.community_mint,
-            &signer.pubkey(),
-        );
-
-        let governance_vault = derive_governance_vault(realm_pubkey, &realm_data.community_mint);
-
-        sp.finish_with_message("Realm discovered");
-
-        req = req.instruction(Instruction::new_with_borsh(
-            program.id(),
-            &instruction::MintVotes { amount: None }, // FIXME: amount omitted to do full amount possible (?)
-            accounts::MintVotes {
-                owner: signer.pubkey(),
-                stake_pool: *pool,
-                stake_pool_vault,
-                stake_vote_mint,
-                stake_account,
-                voter_token_account,
-                governance_realm: *realm_pubkey,
-                governance_vault,
-                governance_owner_record,
-                payer: signer.pubkey(),
-                governance_program: jet_spl_governance::ID,
-                token_program,
-                system_program,
-                rent,
-            }
-            .to_account_metas(None),
-        ));
-
-        ix_names.push("jet_staking::MintVotes");
-
-        req = req.instruction(anchor_spl::token::spl_token::instruction::close_account(
-            &token_program,
-            &voter_token_account,
-            &signer.pubkey(),
-            &signer.pubkey(),
-            &[&signer.pubkey()],
-        )?);
-
-        ix_names.push("token_program::CloseAccount");
-    }
-
     sp.finish_with_message("Instruction bytes compiled");
 
     send_with_approval(cfg, req.signer(signer.as_ref()), Some(ix_names))
@@ -269,6 +184,7 @@ fn process_close_account(cfg: &Config, pool: &Pubkey, receiver: &Option<Pubkey>)
     // Derive the public key of the `jet_staking::StakeAccount` that
     // is being closed in the instruction call and assert that is exists
     let stake_account = derive_stake_account(pool, &signer.pubkey(), &program.id());
+    let voter_weight_record = derive_voter_weight_record(&stake_account, &program.id());
 
     assert_exists!(&program, StakeAccount, &stake_account);
 
@@ -285,6 +201,7 @@ fn process_close_account(cfg: &Config, pool: &Pubkey, receiver: &Option<Pubkey>)
             .accounts(accounts::CloseStakeAccount {
                 owner: signer.pubkey(),
                 closer,
+                voter_weight_record,
                 stake_account,
             })
             .args(instruction::CloseStakeAccount {})
@@ -303,6 +220,7 @@ fn process_create_account(cfg: &Config, pool: &Pubkey) -> Result<()> {
     // stake account does not exist since this command creates one
     let auth = derive_auth_account(&signer.pubkey(), &program.id());
     let stake_account = derive_stake_account(pool, &signer.pubkey(), &program.id());
+    let voter_weight_record = derive_voter_weight_record(&stake_account, &program.id());
 
     assert_not_exists!(&program, StakeAccount, &stake_account);
 
@@ -317,6 +235,7 @@ fn process_create_account(cfg: &Config, pool: &Pubkey) -> Result<()> {
                 stake_pool: *pool,
                 stake_account,
                 payer: signer.pubkey(),
+                voter_weight_record,
                 system_program,
             })
             .args(instruction::InitStakeAccount {})
@@ -334,6 +253,7 @@ fn process_create_account(cfg: &Config, pool: &Pubkey) -> Result<()> {
 fn process_create_pool(
     cfg: &Config,
     seed: String,
+    realm: &Pubkey,
     token_mint: &Pubkey,
     unbond_period: u64,
 ) -> Result<()> {
@@ -345,8 +265,8 @@ fn process_create_pool(
         pool,
         vault,
         collateral_mint,
-        vote_mint,
     } = derive_stake_pool(&seed, &program.id());
+    let max_voter_weight_record = derive_max_voter_weight_record(realm, &program.id());
 
     assert_not_exists!(&program, StakePool, &pool);
 
@@ -360,20 +280,27 @@ fn process_create_pool(
                 authority: signer.pubkey(),
                 token_mint: *token_mint,
                 stake_pool: pool,
-                stake_vote_mint: vote_mint,
                 stake_collateral_mint: collateral_mint,
                 stake_pool_vault: vault,
+                max_voter_weight_record,
                 token_program,
                 system_program,
                 rent,
             })
             .args(instruction::InitPool {
                 seed,
-                config: PoolConfig { unbond_period },
+                config: PoolConfig {
+                    governance_realm: *realm,
+                    unbond_period,
+                },
             })
             .signer(signer.as_ref()),
         None,
-    )
+    )?;
+
+    println!("Pubkey: {}", pool);
+
+    Ok(())
 }
 
 /// The function handler for the staking subcommand that allows users to
@@ -459,36 +386,4 @@ fn process_withdraw_unbonded(
             .signer(signer.as_ref()),
         None,
     )
-}
-
-/// Reads the account of the argued governance realm
-/// public key and deserialize the account data bytes into a usable
-/// instance of the `spl_governance::state::realm::Realm` struct.
-fn parse_realm(program: &Program, realm: &Pubkey, gov_program: &Pubkey) -> Result<Realm> {
-    let client = program.rpc();
-    let account = client.get_account_with_commitment(realm, client.commitment())?;
-
-    if account.value.is_none() {
-        return Err(anyhow!(
-            "realm {} not found for program {}",
-            realm,
-            gov_program
-        ));
-    }
-
-    let acc_info = account.value.as_ref().unwrap();
-    get_realm_data(
-        gov_program,
-        &AccountInfo::new(
-            realm,
-            false,
-            false,
-            &mut acc_info.lamports.clone(),
-            &mut acc_info.data.clone(),
-            &acc_info.owner,
-            false,
-            acc_info.rent_epoch,
-        ),
-    )
-    .map_err(Into::into)
 }
