@@ -13,7 +13,7 @@ use crate::pubkey::derive_auth_account;
 /// Auth program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
 pub enum AuthCommand {
-    #[clap(about = "Create a new auth account")]
+    /// Create a new auth account.
     CreateAccount {},
 }
 

@@ -29,19 +29,25 @@ pub struct Opts {
 /// interact with via the command line tool.
 #[derive(Debug, Parser)]
 enum Command {
+    /// jet_auth program commands.
     Auth {
+        /// (Optional) Override of the `jet_auth` program ID.
         #[clap(global = true, long, default_value_t = jet_auth::ID)]
         program: Pubkey,
         #[clap(subcommand)]
         subcmd: auth::AuthCommand,
     },
+    /// jet_rewards program commands.
     Rewards {
+        /// (Optional) Override of the `jet_rewards` program ID.
         #[clap(global = true, long, default_value_t = jet_rewards::ID)]
         program: Pubkey,
         #[clap(subcommand)]
         subcmd: rewards::RewardsCommand,
     },
+    /// jet_staking program commands.
     Staking {
+        /// (Optional) Override of the `jet_staking` program ID.
         #[clap(global = true, long, default_value_t = jet_staking::ID)]
         program: Pubkey,
         #[clap(subcommand)]

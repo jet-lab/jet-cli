@@ -24,30 +24,36 @@ use crate::terminal::Spinner;
 /// Staking program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
 pub enum StakingCommand {
-    #[clap(about = "Deposit to a stake pool from your account")]
+    /// Deposit to a stake pool from your account.
     Add {
-        #[clap(long)]
+        /// (Optional) The amount of token to stake in the pool. The program
+        /// by default will attempt to stake as much as possible if
+        /// no amount is provided.
+        #[clap(short, long)]
         amount: Option<u64>,
-        #[clap(long)]
+        /// Stake pool to deposit.
+        #[clap(short, long)]
         pool: Pubkey,
-        #[clap(long)]
-        realm: Pubkey,
-        #[clap(long)]
+        /// Associated governance realm public key.
+        #[clap(short, long)]
+        realm: Option<Pubkey>,
+        /// Skip the `jet_staking::MintVotes` and associated instructions.
+        #[clap(long, conflicts_with = "realm")]
         skip_mint_votes: bool,
     },
-    #[clap(about = "Close a stake account")]
+    /// Close a stake account.
     CloseAccount {
         #[clap(long)]
         pool: Pubkey,
         #[clap(long)]
         receiver: Option<Pubkey>,
     },
-    #[clap(about = "Create a new stake account")]
+    /// Create a new stake account.
     CreateAccount {
         #[clap(long)]
         pool: Pubkey,
     },
-    #[clap(about = "Create a new staking pool")]
+    /// Create a new staking pool.
     CreatePool {
         #[clap(long)]
         seed: String,
@@ -56,7 +62,7 @@ pub enum StakingCommand {
         #[clap(long)]
         unbond_period: u64,
     },
-    #[clap(about = "Withdraw bonded stake funds from a pool")]
+    /// Withdraw bonded stake funds from a pool.
     WithdrawBonded {
         #[clap(long)]
         amount: u64,
@@ -65,7 +71,7 @@ pub enum StakingCommand {
         #[clap(long)]
         receiver: Option<Pubkey>,
     },
-    #[clap(about = "Withdraw bonded stake funds from a pool")]
+    /// Withdraw bonded stake funds from a pool.
     WithdrawUnbonded {
         #[clap(long)]
         pool: Pubkey,
@@ -124,7 +130,7 @@ fn process_add_stake(
     cfg: &Config,
     amount: &Option<u64>,
     pool: &Pubkey,
-    realm: &Pubkey,
+    realm: &Option<Pubkey>,
     skip_mint_votes: bool,
 ) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
@@ -146,24 +152,7 @@ fn process_add_stake(
 
     sp.finish_with_message("Stake pool accounts retrieved");
 
-    //
-    sp = Spinner::new("Parsing governance realm data");
-
-    let realm_data = parse_realm(&program, realm, &jet_spl_governance::ID)?;
-
-    let governance_owner_record = get_token_owner_record_address(
-        &jet_spl_governance::ID,
-        realm,
-        &realm_data.community_mint,
-        &signer.pubkey(),
-    );
-
-    let governance_vault = derive_governance_vault(realm, &realm_data.community_mint);
-
-    sp.finish_with_message("Realm discovered");
-
     let payer_token_account = get_associated_token_address(&signer.pubkey(), &token_mint);
-    let voter_token_account = get_associated_token_address(&signer.pubkey(), &stake_vote_mint);
     let stake_account = derive_stake_account(pool, &signer.pubkey(), &program.id());
 
     sp = Spinner::new("Preprending required instructions");
@@ -203,6 +192,8 @@ fn process_add_stake(
     ix_names.push("jet_staking::AddStake");
 
     if !skip_mint_votes {
+        let voter_token_account = get_associated_token_address(&signer.pubkey(), &stake_vote_mint);
+
         if !account_exists(&program, &voter_token_account)? {
             req = req.instruction(create_associated_token_account(
                 &signer.pubkey(),
@@ -212,6 +203,24 @@ fn process_add_stake(
 
             ix_names.push("associated_token_program::Create");
         }
+
+        sp = Spinner::new("Parsing governance realm data");
+
+        assert!(realm.is_some());
+
+        let realm_pubkey = realm.as_ref().unwrap();
+        let realm_data = parse_realm(&program, realm_pubkey, &jet_spl_governance::ID)?;
+
+        let governance_owner_record = get_token_owner_record_address(
+            &jet_spl_governance::ID,
+            realm_pubkey,
+            &realm_data.community_mint,
+            &signer.pubkey(),
+        );
+
+        let governance_vault = derive_governance_vault(realm_pubkey, &realm_data.community_mint);
+
+        sp.finish_with_message("Realm discovered");
 
         req = req.instruction(Instruction::new_with_borsh(
             program.id(),
@@ -223,7 +232,7 @@ fn process_add_stake(
                 stake_vote_mint,
                 stake_account,
                 voter_token_account,
-                governance_realm: *realm,
+                governance_realm: *realm_pubkey,
                 governance_vault,
                 governance_owner_record,
                 payer: signer.pubkey(),
