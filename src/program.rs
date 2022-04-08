@@ -71,16 +71,20 @@ mod tests {
 
     #[test]
     fn account_exists_finds_real_pubkey() {
-        let mut cfg = Config::default();
-        cfg.cluster = Cluster::Mainnet;
+        let cfg = Config {
+            cluster: Cluster::Mainnet,
+            ..Default::default()
+        };
         let (program, _) = create_program_client(&cfg);
         assert!(account_exists(&program, &system_program::ID).unwrap_or(false));
     }
 
     #[test]
     fn account_exists_doesnt_find_bad_pubkey() {
-        let mut cfg = Config::default();
-        cfg.cluster = Cluster::Mainnet;
+        let cfg = Config {
+            cluster: Cluster::Mainnet,
+            ..Default::default()
+        };
         let (program, _) = create_program_client(&cfg);
         assert!(account_exists(&program, &Pubkey::default()).unwrap_or(false));
     }
