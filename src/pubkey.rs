@@ -15,7 +15,7 @@ pub(crate) fn derive_auth_account(owner: &Pubkey, auth_program: &Pubkey) -> Pubk
 /// Derive the public key of a governance max vote weight record program account.
 pub(crate) fn derive_max_voter_weight_record(realm: &Pubkey, staking_program: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(
-        &[realm.as_ref(), b"max-vote-weight-record"],
+        &[realm.as_ref(), jet_staking::seeds::MAX_VOTE_WEIGHT_RECORD],
         staking_program,
     )
     .0
@@ -35,9 +35,13 @@ pub(crate) fn derive_stake_account(
 pub(crate) fn derive_stake_pool(seed: &str, staking_program: &Pubkey) -> StakePoolAddresses {
     StakePoolAddresses {
         pool: Pubkey::find_program_address(&[seed.as_ref()], staking_program).0,
-        vault: Pubkey::find_program_address(&[seed.as_ref(), b"vault"], staking_program).0,
+        vault: Pubkey::find_program_address(
+            &[seed.as_ref(), jet_staking::seeds::VAULT],
+            staking_program,
+        )
+        .0,
         collateral_mint: Pubkey::find_program_address(
-            &[seed.as_ref(), b"collateral-mint"],
+            &[seed.as_ref(), jet_staking::seeds::COLLATERAL_MINT],
             staking_program,
         )
         .0,
@@ -47,7 +51,10 @@ pub(crate) fn derive_stake_pool(seed: &str, staking_program: &Pubkey) -> StakePo
 /// Derive the public key of a governance voter weight record program account.
 pub(crate) fn derive_voter_weight_record(stake_account: &Pubkey, stake_program: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(
-        &[b"voter-weight-record", stake_account.as_ref()],
+        &[
+            jet_staking::seeds::VOTER_WEIGHT_RECORD,
+            stake_account.as_ref(),
+        ],
         stake_program,
     )
     .0
@@ -66,7 +73,14 @@ mod tests {
         );
     }
 
-    // TODO: test derive_max_voter_weight_record
+    #[test]
+    fn derive_correct_max_vote_weight_record() {
+        let record = derive_max_voter_weight_record(&Pubkey::default(), &jet_staking::ID);
+        assert_eq!(
+            record.to_string(),
+            "AwJBGLSw1ZKSjnc1o4eoibgUrNUrA6m1ucdRKoRPVmjK"
+        );
+    }
 
     #[test]
     fn derive_correct_staking_address() {
@@ -78,7 +92,32 @@ mod tests {
         );
     }
 
-    // TODO: test derive_stake_pool
+    #[test]
+    fn derive_correct_stake_pool_addrs() {
+        let addrs = derive_stake_pool("sample", &jet_staking::ID);
 
-    // TODO: test derive_voter_weight_record
+        assert_eq!(
+            addrs.pool.to_string(),
+            "8t8jY9M3jTaEWwWPwJ7CtTEZ7hHwRmojT1Smam93Yu3o"
+        );
+
+        assert_eq!(
+            addrs.collateral_mint.to_string(),
+            "3cmvamUuqAVVTyhuY6RbFnVm42ZHRYPuGn27yEmE1rut"
+        );
+
+        assert_eq!(
+            addrs.vault.to_string(),
+            "GoUSrowwjgV4ysBhDNTg44AkvaMdeJJC39e2qhMf21NY"
+        );
+    }
+
+    #[test]
+    fn derive_correct_voter_weight_record() {
+        let record = derive_voter_weight_record(&Pubkey::default(), &jet_staking::ID);
+        assert_eq!(
+            record.to_string(),
+            "HtqjKEAntMPicb7TD3UhTbTzu4iAJSHZpUfwdQQn5TvQ"
+        );
+    }
 }

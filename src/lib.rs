@@ -12,7 +12,8 @@ mod terminal;
 use cmd::*;
 use config::ConfigOverride;
 
-/// The top level command line options parser for the binary.
+/// Jet Protocol command line interface for interacting
+/// with the various programs.
 #[derive(Debug, Parser)]
 #[clap(version)]
 #[clap(propagate_version = true)]
@@ -37,6 +38,14 @@ enum Command {
         #[clap(subcommand)]
         subcmd: auth::AuthCommand,
     },
+    /// jet_margin program commands.
+    Margin {
+        /// (Optional) Override of the `jet_margin` program ID.
+        #[clap(global = true, long, default_value_t = Pubkey::default() /* FIXME: jet_margin::ID */)]
+        program: Pubkey,
+        #[clap(subcommand)]
+        subcmd: margin::MarginCommand,
+    },
     /// jet_rewards program commands.
     Rewards {
         /// (Optional) Override of the `jet_rewards` program ID.
@@ -60,6 +69,7 @@ enum Command {
 pub fn run(opts: Opts) -> Result<()> {
     match opts.command {
         Command::Auth { program, subcmd } => auth::entry(&opts.cfg, &program, &subcmd),
+        Command::Margin { program, subcmd } => margin::entry(&opts.cfg, &program, &subcmd),
         Command::Rewards { program, subcmd } => rewards::entry(&opts.cfg, &program, &subcmd),
         Command::Staking { program, subcmd } => staking::entry(&opts.cfg, &program, &subcmd),
     }

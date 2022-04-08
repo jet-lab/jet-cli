@@ -55,6 +55,8 @@ mod tests {
     use super::*;
     use crate::config::Config;
     use anchor_client::solana_sdk::signer::Signer;
+    use anchor_client::solana_sdk::system_program;
+    use anchor_client::Cluster;
 
     #[test]
     fn program_client_creates_instance() {
@@ -65,5 +67,21 @@ mod tests {
         assert_eq!(p.0.id(), Pubkey::default());
         assert_eq!(p.0.payer(), signer_pubkey);
         assert_eq!(p.1.pubkey(), signer_pubkey);
+    }
+
+    #[test]
+    fn account_exists_finds_real_pubkey() {
+        let mut cfg = Config::default();
+        cfg.cluster = Cluster::Mainnet;
+        let (program, _) = create_program_client(&cfg);
+        assert!(account_exists(&program, &system_program::ID).unwrap_or(false));
+    }
+
+    #[test]
+    fn account_exists_doesnt_find_bad_pubkey() {
+        let mut cfg = Config::default();
+        cfg.cluster = Cluster::Mainnet;
+        let (program, _) = create_program_client(&cfg);
+        assert!(account_exists(&program, &Pubkey::default()).unwrap_or(false));
     }
 }

@@ -5,10 +5,13 @@ use std::borrow::Cow;
 
 use super::config::Config;
 
+/// Internal wrapper for the `indicatif::ProgressBar`.
 #[derive(Debug)]
 pub(crate) struct Spinner(ProgressBar);
 
 impl Spinner {
+    /// Create a new `indicatif::ProgressBar` spinner with
+    /// a standardized style and ticker.
     pub fn new(msg: impl Into<Cow<'static, str>>) -> Self {
         let pb = ProgressBar::new_spinner();
         pb.enable_steady_tick(80);
@@ -23,6 +26,7 @@ impl Spinner {
         Self(pb)
     }
 
+    /// End the spinner with a new completion message.
     pub fn finish_with_message(&self, msg: impl Into<Cow<'static, str>>) {
         self.0
             .set_style(ProgressStyle::default_spinner().template("✅ {msg}"));
