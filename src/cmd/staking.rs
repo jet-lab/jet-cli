@@ -20,15 +20,21 @@ use crate::terminal::Spinner;
 /// Staking program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
 pub enum StakingCommand {
+    /// Get the account data for user's stake account.
+    Account {
+        /// The stake pool associated with the account.
+        #[clap(long)]
+        pool: Pubkey,
+    },
     /// Deposit to a stake pool from your account.
     Add {
         /// (Optional) The amount of token to stake in the pool. The program
         /// by default will attempt to stake as much as possible if
         /// no amount is provided.
-        #[clap(short, long)]
+        #[clap(long)]
         amount: Option<u64>,
         /// Stake pool to deposit.
-        #[clap(short, long)]
+        #[clap(long)]
         pool: Pubkey,
     },
     /// Close a stake account.
@@ -99,6 +105,7 @@ pub fn entry(
 ) -> Result<()> {
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
+        StakingCommand::Account { pool } => process_get_account(&cfg, pool),
         StakingCommand::Add { amount, pool } => process_add_stake(&cfg, amount, pool),
         StakingCommand::CloseAccount { pool, receiver } => {
             process_close_account(&cfg, pool, receiver)
@@ -124,6 +131,16 @@ pub fn entry(
             process_withdraw_unbonded(&cfg, pool, rent_receiver, token_receiver, unbonding_account)
         }
     }
+}
+
+/// The function handler to get the deserialized data for the derived user stake account
+/// and display the data in the terminal for the user to observe.
+fn process_get_account(cfg: &Config, pool: &Pubkey) -> Result<()> {
+    let (program, signer) = create_program_client(cfg);
+    let stake_account = derive_stake_account(pool, &signer.pubkey(), &program.id());
+    let acc = program.account::<StakeAccount>(stake_account)?;
+    println!("{:#?}", acc);
+    Ok(())
 }
 
 /// The function handler for the staking subcommand that allows users to add
