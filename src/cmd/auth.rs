@@ -15,6 +15,12 @@ use crate::pubkey::derive_auth_account;
 pub enum AuthCommand {
     /// Create a new auth account.
     CreateAccount {},
+    /// Derive the public key of an auth account.
+    DeriveAccount {
+        /// (Optional) Base-58 override of the account owner.
+        #[clap(long)]
+        owner: Option<Pubkey>,
+    },
 }
 
 /// The main entry point and handler for all auth
@@ -22,13 +28,14 @@ pub enum AuthCommand {
 pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &AuthCommand) -> Result<()> {
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
-        AuthCommand::CreateAccount {} => create_account(&cfg),
+        AuthCommand::CreateAccount {} => process_create_account(&cfg),
+        AuthCommand::DeriveAccount { owner } => process_derive_account(&cfg, owner),
     }
 }
 
 /// The function handler for the auth subcommand that allows
 /// users to create a new authentication account for themselves.
-fn create_account(cfg: &Config) -> Result<()> {
+fn process_create_account(cfg: &Config) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
 
     // Derive the public key of the new authentication account
@@ -54,5 +61,13 @@ fn create_account(cfg: &Config) -> Result<()> {
 
     println!("Pubkey: {}", auth);
 
+    Ok(())
+}
+
+/// The function handler to derive the public key of a `jet_auth::UserAuthentication` program account.
+fn process_derive_account(cfg: &Config, owner: &Option<Pubkey>) -> Result<()> {
+    let acc_owner = owner.unwrap_or(cfg.keypair.pubkey());
+    let pk = derive_auth_account(&acc_owner, &cfg.program_id);
+    println!("{}", pk);
     Ok(())
 }

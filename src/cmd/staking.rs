@@ -67,6 +67,20 @@ pub enum StakingCommand {
         #[clap(long)]
         unbond_period: u64,
     },
+    /// Derive the public key of a `jet_staking::StakeAccount`.
+    DeriveStakeAccount {
+        /// (Optional) Base-58 pubkey of the account owner.
+        #[clap(long)]
+        owner: Option<Pubkey>,
+        /// Stake pool account to use.
+        #[clap(long)]
+        pool: Pubkey,
+    },
+    /// Derive the public key of a `jet_staking::StakePool`.
+    DeriveStakePool {
+        #[clap(long)]
+        seed: String,
+    },
     /// Withdraw bonded stake funds from a pool.
     WithdrawBonded {
         /// Amount of funds to withdraw.
@@ -117,6 +131,10 @@ pub fn entry(
             token_mint,
             unbond_period,
         } => process_create_pool(&cfg, seed.clone(), realm, token_mint, *unbond_period),
+        StakingCommand::DeriveStakeAccount { owner, pool } => {
+            process_derive_stake_account(&cfg, pool, owner)
+        }
+        StakingCommand::DeriveStakePool { seed } => process_derive_stake_pool(&cfg, seed),
         StakingCommand::WithdrawBonded {
             amount,
             pool,
@@ -219,10 +237,7 @@ fn process_close_account(cfg: &Config, pool: &Pubkey, receiver: &Option<Pubkey>)
 
     assert_exists!(&program, StakeAccount, &stake_account);
 
-    let closer = match receiver {
-        Some(pk) => *pk,
-        None => signer.pubkey(),
-    };
+    let closer = receiver.unwrap_or(signer.pubkey());
 
     // Build and send the `jet_staking::CloseStakeAccount` transaction
     send_with_approval(
@@ -334,6 +349,22 @@ fn process_create_pool(
     Ok(())
 }
 
+/// The function handler to derive the stake account public key for a user
+/// that is associated with a certain stake pool.
+fn process_derive_stake_account(cfg: &Config, pool: &Pubkey, owner: &Option<Pubkey>) -> Result<()> {
+    let acc_owner = owner.unwrap_or(cfg.keypair.pubkey());
+    let pk = derive_stake_account(pool, &acc_owner, &cfg.program_id);
+    println!("{}", pk);
+    Ok(())
+}
+
+/// The function handler to derive the public key of a seeded `jet_staking::StakePool` account.
+fn process_derive_stake_pool(cfg: &Config, seed: &str) -> Result<()> {
+    let pk = derive_stake_pool(seed, &cfg.program_id);
+    println!("{}", pk.pool);
+    Ok(())
+}
+
 /// The function handler for the staking subcommand that allows users to
 /// withdraw bonded stake from the designated pool.
 fn process_withdraw_bonded(
@@ -344,10 +375,7 @@ fn process_withdraw_bonded(
 ) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
 
-    let token_receiver = match receiver {
-        Some(pk) => *pk,
-        None => signer.pubkey(),
-    };
+    let token_receiver = receiver.unwrap_or(signer.pubkey());
 
     let StakePool {
         stake_pool_vault, ..
@@ -384,15 +412,8 @@ fn process_withdraw_unbonded(
 
     let stake_account = derive_stake_account(pool, &signer.pubkey(), &program.id());
 
-    let rent_closer = match rent_receiver {
-        Some(pk) => *pk,
-        None => signer.pubkey(),
-    };
-
-    let token_closer = match token_receiver {
-        Some(pk) => *pk,
-        None => signer.pubkey(),
-    };
+    let rent_closer = rent_receiver.unwrap_or(signer.pubkey());
+    let token_closer = token_receiver.unwrap_or(signer.pubkey());
 
     let StakePool {
         stake_pool_vault, ..
