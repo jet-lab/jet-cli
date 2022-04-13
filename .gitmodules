@@ -1,0 +1,3 @@
+[submodule "jet-margin"]
+	path = jet-margin
+	url = git@github.com:jet-lab/jet-margin

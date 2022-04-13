@@ -41,7 +41,7 @@ enum Command {
     /// jet_margin program commands.
     Margin {
         /// (Optional) Override of the `jet_margin` program ID.
-        #[clap(global = true, long, default_value_t = Pubkey::default() /* FIXME: jet_margin::ID */)]
+        #[clap(global = true, long, default_value_t = jet_margin::ID)]
         program: Pubkey,
         #[clap(subcommand)]
         subcmd: margin::MarginCommand,
