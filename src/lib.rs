@@ -39,13 +39,13 @@ enum Command {
         subcmd: auth::AuthCommand,
     },
     /// jet_margin program commands.
-    Margin {
-        /// (Optional) Override of the `jet_margin` program ID.
-        #[clap(global = true, long, default_value_t = jet_margin::ID)]
-        program: Pubkey,
-        #[clap(subcommand)]
-        subcmd: margin::MarginCommand,
-    },
+    // Margin {
+    //     /// (Optional) Override of the `jet_margin` program ID.
+    //     #[clap(global = true, long, default_value_t = jet_margin::ID)]
+    //     program: Pubkey,
+    //     #[clap(subcommand)]
+    //     subcmd: margin::MarginCommand,
+    // },
     /// jet_rewards program commands.
     Rewards {
         /// (Optional) Override of the `jet_rewards` program ID.
@@ -69,7 +69,7 @@ enum Command {
 pub fn run(opts: Opts) -> Result<()> {
     match opts.command {
         Command::Auth { program, subcmd } => auth::entry(&opts.cfg, &program, &subcmd),
-        Command::Margin { program, subcmd } => margin::entry(&opts.cfg, &program, &subcmd),
+        // Command::Margin { program, subcmd } => margin::entry(&opts.cfg, &program, &subcmd),
         Command::Rewards { program, subcmd } => rewards::entry(&opts.cfg, &program, &subcmd),
         Command::Staking { program, subcmd } => staking::entry(&opts.cfg, &program, &subcmd),
     }
