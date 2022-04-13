@@ -42,10 +42,10 @@ jobs:
           key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Format Check
-        run: cargo fmt --all --check
+        run: cargo fmt --check
 
       - name: Clippy Check
-        run: cargo clippy --all-targets -- -Dwarnings
+        run: cargo clippy -- -Dwarnings
 
       - name: Tests
         run: cargo test
