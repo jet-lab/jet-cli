@@ -1463,6 +1463,7 @@ dependencies = [
  "dirs",
  "indicatif",
  "jet-proto-auth",
+ "jet-proto-margin",
  "jet-proto-rewards",
  "jet-proto-staking",
  "serde_json",
@@ -1477,6 +1478,39 @@ version = "1.0.0"
 source = "git+https://github.com/jet-lab/jet-governance?branch=master#c766ac5cb265c206a1ca6e805274403c8e1b7207"
 dependencies = [
  "anchor-lang",
+]
+
+[[package]]
+name = "jet-proto-margin"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bytemuck",
+ "jet-proto-math",
+ "jet-proto-metadata",
+ "jet-proto-proc-macros",
+ "pyth-client",
+ "static_assertions",
+]
+
+[[package]]
+name = "jet-proto-math"
+version = "1.0.3"
+source = "git+https://github.com/jet-lab/program-libraries?branch=main#25691bffb5efe68ce8d6e65a098924f0e1d129b6"
+dependencies = [
+ "bytemuck",
+ "static_assertions",
+ "thiserror",
+ "uint",
+]
+
+[[package]]
+name = "jet-proto-metadata"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "solana-program",
 ]
 
 [[package]]
@@ -2042,6 +2076,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pyth-client"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f779e98b8c8016d0c1409247a204bd4fcdea8b67ceeef545f04e324d66c49e52"
+dependencies = [
+ "borsh",
+ "borsh-derive",
+ "bytemuck",
+ "num-derive",
+ "num-traits",
+ "serde",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
 name = "qstring"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2283,6 +2333,12 @@ name = "rustc-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
+
+[[package]]
+name = "rustc-hex"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e75f6a532d0fd9f7f13144f392b6ad56a32696bfcd9c78f797f16bbb6f072d6"
 
 [[package]]
 name = "rustc_version"
@@ -3569,6 +3625,18 @@ name = "typenum"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
+
+[[package]]
+name = "uint"
+version = "0.8.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9db035e67dfaf7edd9aebfe8676afcd63eed53c8a4044fed514c8cccf1835177"
+dependencies = [
+ "byteorder",
+ "crunchy",
+ "rustc-hex",
+ "static_assertions",
+]
 
 [[package]]
 name = "unicode-bidi"
