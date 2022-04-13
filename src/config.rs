@@ -58,6 +58,20 @@ impl ConfigOverride {
     }
 }
 
+/// Default implementation for the `ConfigOverride` struct purposed for
+/// quickly instantiating during the cargo test executions.
+#[cfg(test)]
+impl Default for ConfigOverride {
+    fn default() -> Self {
+        Self {
+            auto_approve: false,
+            keypair_path: "~/.config/solana/id.json".into(),
+            url: Cluster::Devnet,
+            verbose: false,
+        }
+    }
+}
+
 /// The struct definitions of the options that are transformed
 /// by the global CLI overrides for all commands.
 #[derive(Debug)]
