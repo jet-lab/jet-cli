@@ -16,6 +16,7 @@ default = []
 anchor-client = { git = "https://github.com/jet-lab/anchor", branch = "master" }
 anchor-spl = { git = "https://github.com/jet-lab/anchor", branch = "master" }
 anyhow = "1.0"
+chrono = "0.4"
 clap = { version = "3.1", features = ["derive"] }
 dialoguer = "0.10"
 dirs = "4.0"

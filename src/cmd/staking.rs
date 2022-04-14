@@ -17,14 +17,14 @@ use crate::program::*;
 use crate::pubkey::*;
 use crate::terminal::Spinner;
 
-const DEFAULT_STAKE_POOL: &str = "4o7XLNe2NYtcxhFpiXYKSobgodsuQvHgxKriDiYqE2tP";
+pub const DEFAULT_STAKE_POOL: &str = "4o7XLNe2NYtcxhFpiXYKSobgodsuQvHgxKriDiYqE2tP";
 
 /// Staking program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
 pub enum StakingCommand {
     /// Get the account data for user's stake account.
     Account {
-        /// (Optional) Base-58 pubkey of the account owner.
+        /// Base-58 pubkey of the account owner.
         #[clap(long)]
         owner: Option<Pubkey>,
         /// The stake pool associated with the account.
@@ -33,7 +33,7 @@ pub enum StakingCommand {
     },
     /// Deposit to a stake pool from your account.
     Add {
-        /// (Optional) The amount of token to stake in the pool. The program
+        /// The amount of token to stake in the pool. The program
         /// by default will attempt to stake as much as possible if
         /// no amount is provided.
         #[clap(long)]
@@ -47,7 +47,7 @@ pub enum StakingCommand {
         /// Stake pool associated with the account.
         #[clap(long, default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
-        /// (Optional) Wallet receiving the rent funds.
+        /// Wallet receiving the rent funds.
         #[clap(long)]
         receiver: Option<Pubkey>,
     },
@@ -74,7 +74,7 @@ pub enum StakingCommand {
     },
     /// Derive the public key of a `jet_staking::StakeAccount`.
     DeriveStakeAccount {
-        /// (Optional) Base-58 pubkey of the account owner.
+        /// Base-58 pubkey of the account owner.
         #[clap(long)]
         owner: Option<Pubkey>,
         /// Stake pool account to use.
@@ -98,7 +98,7 @@ pub enum StakingCommand {
         /// Stake pool to withdraw.
         #[clap(long, default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
-        /// (Optional) Wallet to receive the withdrawn funds.
+        /// Wallet to receive the withdrawn funds.
         #[clap(long)]
         receiver: Option<Pubkey>,
     },
@@ -107,10 +107,10 @@ pub enum StakingCommand {
         /// Stake pool to withdraw.
         #[clap(long, default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
-        /// (Optional) Wallet to receive the account rent.
+        /// Wallet to receive the account rent.
         #[clap(long)]
         rent_receiver: Option<Pubkey>,
-        /// (Optional) Wallet to receive withdrawn funds.
+        /// Wallet to receive withdrawn funds.
         #[clap(long)]
         token_receiver: Option<Pubkey>,
         /// Public key of the unbonding account.

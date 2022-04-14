@@ -17,7 +17,7 @@ pub enum AuthCommand {
     CreateAccount {},
     /// Derive the public key of an auth account.
     DeriveAccount {
-        /// (Optional) Base-58 override of the account owner.
+        /// Base-58 override of the account owner.
         #[clap(long)]
         owner: Option<Pubkey>,
     },

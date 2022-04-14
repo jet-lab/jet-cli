@@ -14,14 +14,14 @@ pub struct ConfigOverride {
     /// Auto-approve the signing and execution of the command transaction(s).
     #[clap(global = true, long)]
     auto_approve: bool,
-    /// (Optional) Override of the path to the keypair to be used as signer.
+    /// Override of the path to the keypair to be used as signer.
     #[clap(
         global = true,
         long = "keypair",
         default_value = "~/.config/solana/id.json"
     )]
     keypair_path: String,
-    /// (Optional) Override of the cluster to use.
+    /// Override of the cluster to use.
     #[clap(global = true, short = 'u', long, default_value_t = Cluster::Localnet)]
     url: Cluster,
     /// Enables logging verbosity for things like transaction signatures.

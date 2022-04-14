@@ -1,12 +1,16 @@
+use anchor_client::solana_client::rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType};
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Signer;
+use anchor_client::ProgramAccountsIterator;
 use anchor_spl::token::ID as token_program;
 use anyhow::Result;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use clap::Subcommand;
 use jet_rewards::state::Airdrop;
 use jet_rewards::{accounts, instruction};
 use jet_staking::state::StakePool;
 
+use super::staking::DEFAULT_STAKE_POOL;
 use crate::config::{Config, ConfigOverride};
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::{derive_stake_account, derive_voter_weight_record};
@@ -18,6 +22,14 @@ pub enum RewardsCommand {
     ClaimAirdrop {
         /// The public key of the target airdrop.
         airdrop: Pubkey,
+    },
+    ListAirdrops {
+        /// Only display the list of airdrop pubkeys.
+        #[clap(long)]
+        only_pubkeys: bool,
+        /// The stake pool associated with the airdrop(s).
+        #[clap(short, long, default_value = DEFAULT_STAKE_POOL)]
+        pool: Pubkey,
     },
 }
 
@@ -31,6 +43,9 @@ pub fn entry(
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
         RewardsCommand::ClaimAirdrop { airdrop } => process_claim_airdrop(&cfg, airdrop),
+        RewardsCommand::ListAirdrops { only_pubkeys, pool } => {
+            process_list_airdrops(&cfg, *only_pubkeys, pool)
+        }
     }
 }
 
@@ -81,4 +96,44 @@ fn process_claim_airdrop(cfg: &Config, airdrop: &Pubkey) -> Result<()> {
             .signer(signer.as_ref()),
         Some(vec!["jet_rewards::AirdropClaim"]),
     )
+}
+
+/// The function handler for retrieving and displaying the list of airdrop accounts
+/// discovered via their stake pool association with the provided public key.
+fn process_list_airdrops(cfg: &Config, only_pubkeys: bool, pool: &Pubkey) -> Result<()> {
+    let (program, _) = create_program_client(cfg);
+
+    let filters = vec![
+        RpcFilterType::DataSize(8 + std::mem::size_of::<Airdrop>() as u64),
+        RpcFilterType::Memcmp(Memcmp {
+            offset: 112,
+            bytes: MemcmpEncodedBytes::Bytes(pool.to_bytes().to_vec()),
+            encoding: None,
+        }),
+    ];
+
+    let airdrops: ProgramAccountsIterator<Airdrop> = program.accounts_lazy(filters)?;
+
+    if only_pubkeys {
+        airdrops.for_each(|drop| println!("{}", drop.unwrap().0));
+    } else {
+        println!("Airdrops of {}:", pool);
+        airdrops.enumerate().for_each(|(i, drop)| {
+            let a = drop.unwrap();
+            let naive_dt = NaiveDateTime::from_timestamp(a.1.expire_at, 0);
+            let dt: DateTime<Utc> = DateTime::from_utc(naive_dt, Utc);
+
+            println!();
+            println!("[{}]", i + 1);
+            println!("Pubkey:      {}", a.0);
+            println!("Vault:       {}", a.1.reward_vault);
+            println!("Expiration:  {} (chain clock time)", dt);
+            println!(
+                "Description: {}",
+                String::from_utf8(a.1.long_desc.to_vec()).unwrap()
+            );
+        });
+    }
+
+    Ok(())
 }
