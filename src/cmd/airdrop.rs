@@ -15,15 +15,15 @@ use crate::config::{Config, ConfigOverride};
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::{derive_stake_account, derive_voter_weight_record};
 
-/// Rewards program based subcommand enum variants.
+/// Rewards program based subcommand enum variants for airdrops.
 #[derive(Debug, Subcommand)]
-pub enum RewardsCommand {
-    /// Claim governance rewards airdrop.
-    ClaimAirdrop {
+pub enum AirdropCommand {
+    /// Claim rewards airdrop.
+    Claim {
         /// The public key of the target airdrop.
         airdrop: Pubkey,
     },
-    ListAirdrops {
+    List {
         /// Only display the list of airdrop pubkeys.
         #[clap(long)]
         only_pubkeys: bool,
@@ -38,20 +38,18 @@ pub enum RewardsCommand {
 pub fn entry(
     overrides: &ConfigOverride,
     program_id: &Pubkey,
-    subcmd: &RewardsCommand,
+    subcmd: &AirdropCommand,
 ) -> Result<()> {
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
-        RewardsCommand::ClaimAirdrop { airdrop } => process_claim_airdrop(&cfg, airdrop),
-        RewardsCommand::ListAirdrops { only_pubkeys, pool } => {
-            process_list_airdrops(&cfg, *only_pubkeys, pool)
-        }
+        AirdropCommand::Claim { airdrop } => process_claim(&cfg, airdrop),
+        AirdropCommand::List { only_pubkeys, pool } => process_list(&cfg, *only_pubkeys, pool),
     }
 }
 
 /// The function handler to allow a user to claim a rewards airdrop
 /// that they provide the public key for.
-fn process_claim_airdrop(cfg: &Config, airdrop: &Pubkey) -> Result<()> {
+fn process_claim(cfg: &Config, airdrop: &Pubkey) -> Result<()> {
     // Instantiate program clients for both jet_rewards and jet_staking programs
     let (rewards_program, signer) = create_program_client(cfg);
     let (staking_program, _) =
@@ -100,7 +98,7 @@ fn process_claim_airdrop(cfg: &Config, airdrop: &Pubkey) -> Result<()> {
 
 /// The function handler for retrieving and displaying the list of airdrop accounts
 /// discovered via their stake pool association with the provided public key.
-fn process_list_airdrops(cfg: &Config, only_pubkeys: bool, pool: &Pubkey) -> Result<()> {
+fn process_list(cfg: &Config, only_pubkeys: bool, pool: &Pubkey) -> Result<()> {
     let (program, _) = create_program_client(cfg);
 
     let filters = vec![

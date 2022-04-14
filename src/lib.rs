@@ -30,6 +30,14 @@ pub struct Opts {
 /// interact with via the command line tool.
 #[derive(Debug, Parser)]
 enum Command {
+    /// jet_rewards program commands for airdrops.
+    Airdrop {
+        /// Override of the `jet_rewards` program ID.
+        #[clap(global = true, long, default_value_t = jet_rewards::ID)]
+        program: Pubkey,
+        #[clap(subcommand)]
+        subcmd: airdrop::AirdropCommand,
+    },
     /// jet_auth program commands.
     Auth {
         /// Override of the `jet_auth` program ID.
@@ -46,14 +54,6 @@ enum Command {
     //     #[clap(subcommand)]
     //     subcmd: margin::MarginCommand,
     // },
-    /// jet_rewards program commands.
-    Rewards {
-        /// Override of the `jet_rewards` program ID.
-        #[clap(global = true, long, default_value_t = jet_rewards::ID)]
-        program: Pubkey,
-        #[clap(subcommand)]
-        subcmd: rewards::RewardsCommand,
-    },
     /// jet_staking program commands.
     Staking {
         /// Override of the `jet_staking` program ID.
@@ -68,9 +68,9 @@ enum Command {
 /// to the appropriate subcommand entrypoints.
 pub fn run(opts: Opts) -> Result<()> {
     match opts.command {
+        Command::Airdrop { program, subcmd } => airdrop::entry(&opts.cfg, &program, &subcmd),
         Command::Auth { program, subcmd } => auth::entry(&opts.cfg, &program, &subcmd),
         // Command::Margin { program, subcmd } => margin::entry(&opts.cfg, &program, &subcmd),
-        Command::Rewards { program, subcmd } => rewards::entry(&opts.cfg, &program, &subcmd),
         Command::Staking { program, subcmd } => staking::entry(&opts.cfg, &program, &subcmd),
     }
 }

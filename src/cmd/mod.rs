@@ -1,3 +1,3 @@
+pub mod airdrop;
 pub mod auth;
-pub mod rewards;
 pub mod staking;
