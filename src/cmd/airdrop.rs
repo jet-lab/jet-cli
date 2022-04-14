@@ -23,12 +23,13 @@ pub enum AirdropCommand {
         /// The public key of the target airdrop.
         airdrop: Pubkey,
     },
+    /// List all airdrops for a stake pool.
     List {
         /// Only display the list of airdrop pubkeys.
         #[clap(long)]
         only_pubkeys: bool,
         /// The stake pool associated with the airdrop(s).
-        #[clap(short, long, default_value = DEFAULT_STAKE_POOL)]
+        #[clap(long, default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
     },
 }

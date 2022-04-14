@@ -24,11 +24,13 @@ pub const DEFAULT_STAKE_POOL: &str = "4o7XLNe2NYtcxhFpiXYKSobgodsuQvHgxKriDiYqE2
 pub enum StakingCommand {
     /// Get the account data for user's stake account.
     Account {
+        /// Base-58 public key of the account.
+        address: Option<Pubkey>,
         /// Base-58 pubkey of the account owner.
-        #[clap(long)]
+        #[clap(long, conflicts_with = "address")]
         owner: Option<Pubkey>,
         /// The stake pool associated with the account.
-        #[clap(long, default_value = DEFAULT_STAKE_POOL)]
+        #[clap(long, conflicts_with = "address", default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
     },
     /// Deposit to a stake pool from your account.
@@ -73,7 +75,7 @@ pub enum StakingCommand {
         unbond_period: u64,
     },
     /// Derive the public key of a `jet_staking::StakeAccount`.
-    DeriveStakeAccount {
+    DeriveAccount {
         /// Base-58 pubkey of the account owner.
         #[clap(long)]
         owner: Option<Pubkey>,
@@ -82,13 +84,19 @@ pub enum StakingCommand {
         pool: Pubkey,
     },
     /// Derive the public key of a `jet_staking::StakePool`.
-    DeriveStakePool {
+    DerivePool {
         /// The string seed used for the pool.
-        #[clap(short, long)]
+        #[clap(long)]
         seed: String,
         /// Display related vault and mint pubkeys.
         #[clap(long)]
         show_related: bool,
+    },
+    /// Get the account data for a stake pool.
+    Pool {
+        /// Base-58 public key of the pool.
+        #[clap(default_value = DEFAULT_STAKE_POOL)]
+        address: Pubkey,
     },
     /// Withdraw bonded stake funds from a pool.
     WithdrawBonded {
@@ -128,7 +136,11 @@ pub fn entry(
 ) -> Result<()> {
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
-        StakingCommand::Account { owner, pool } => process_get_account(&cfg, owner, pool),
+        StakingCommand::Account {
+            address,
+            owner,
+            pool,
+        } => process_get_account(&cfg, address, owner, pool),
         StakingCommand::Add { amount, pool } => process_add_stake(&cfg, amount, pool),
         StakingCommand::CloseAccount { pool, receiver } => {
             process_close_account(&cfg, pool, receiver)
@@ -140,12 +152,11 @@ pub fn entry(
             token_mint,
             unbond_period,
         } => process_create_pool(&cfg, seed.clone(), realm, token_mint, *unbond_period),
-        StakingCommand::DeriveStakeAccount { owner, pool } => {
-            process_derive_stake_account(&cfg, pool, owner)
+        StakingCommand::DeriveAccount { owner, pool } => process_derive_account(&cfg, pool, owner),
+        StakingCommand::DerivePool { seed, show_related } => {
+            process_derive_pool(&cfg, seed, *show_related)
         }
-        StakingCommand::DeriveStakePool { seed, show_related } => {
-            process_derive_stake_pool(&cfg, seed, *show_related)
-        }
+        StakingCommand::Pool { address } => process_get_pool(&cfg, address),
         StakingCommand::WithdrawBonded {
             amount,
             pool,
@@ -164,10 +175,15 @@ pub fn entry(
 
 /// The function handler to get the deserialized data for the derived user stake account
 /// and display the data in the terminal for the user to observe.
-fn process_get_account(cfg: &Config, owner: &Option<Pubkey>, pool: &Pubkey) -> Result<()> {
+fn process_get_account(
+    cfg: &Config,
+    address: &Option<Pubkey>,
+    owner: &Option<Pubkey>,
+    pool: &Pubkey,
+) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
     let owner_pk = owner.unwrap_or(signer.pubkey());
-    let stake_account = derive_stake_account(pool, &owner_pk, &program.id());
+    let stake_account = address.unwrap_or(derive_stake_account(pool, &owner_pk, &program.id()));
     let acc = program.account::<StakeAccount>(stake_account)?;
     println!("{:#?}", acc);
     Ok(())
@@ -363,7 +379,7 @@ fn process_create_pool(
 
 /// The function handler to derive the stake account public key for a user
 /// that is associated with a certain stake pool.
-fn process_derive_stake_account(cfg: &Config, pool: &Pubkey, owner: &Option<Pubkey>) -> Result<()> {
+fn process_derive_account(cfg: &Config, pool: &Pubkey, owner: &Option<Pubkey>) -> Result<()> {
     let acc_owner = owner.unwrap_or(cfg.keypair.pubkey());
     let pk = derive_stake_account(pool, &acc_owner, &cfg.program_id);
     println!("{}", pk);
@@ -371,7 +387,7 @@ fn process_derive_stake_account(cfg: &Config, pool: &Pubkey, owner: &Option<Pubk
 }
 
 /// The function handler to derive the public key of a seeded `jet_staking::StakePool` account.
-fn process_derive_stake_pool(cfg: &Config, seed: &str, show_related: bool) -> Result<()> {
+fn process_derive_pool(cfg: &Config, seed: &str, show_related: bool) -> Result<()> {
     let pk = derive_stake_pool(seed, &cfg.program_id);
     if show_related {
         println!("Stake Pool:      {}", pk.pool);
@@ -380,6 +396,14 @@ fn process_derive_stake_pool(cfg: &Config, seed: &str, show_related: bool) -> Re
     } else {
         println!("{}", pk.pool);
     }
+    Ok(())
+}
+
+/// The function handler to fetch and view the data from a stake pool account.
+fn process_get_pool(cfg: &Config, address: &Pubkey) -> Result<()> {
+    let (program, _) = create_program_client(cfg);
+    let stake_pool: StakePool = program.account(*address)?;
+    println!("{:#?}", stake_pool);
     Ok(())
 }
 
