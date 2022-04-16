@@ -22,7 +22,7 @@ pub struct ConfigOverride {
     )]
     keypair_path: String,
     /// Override of the cluster to use.
-    #[clap(global = true, short = 'u', long, default_value_t = Cluster::Localnet)]
+    #[clap(global = true, short = 'u', long, default_value_t = Cluster::Devnet)]
     url: Cluster,
     /// Enables logging verbosity for things like transaction signatures.
     #[clap(global = true, short = 'v', long)]

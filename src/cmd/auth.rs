@@ -13,6 +13,14 @@ use crate::pubkey::derive_auth_account;
 /// Auth program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
 pub enum AuthCommand {
+    /// Get the account data for the user's auth account.
+    Account {
+        /// Base-58 public key of the account.
+        address: Option<Pubkey>,
+        /// Base-58 public key of the account owner.
+        #[clap(long, conflicts_with = "address")]
+        owner: Option<Pubkey>,
+    },
     /// Create a new auth account.
     CreateAccount {},
     /// Derive the public key of an auth account.
@@ -28,9 +36,25 @@ pub enum AuthCommand {
 pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &AuthCommand) -> Result<()> {
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
+        AuthCommand::Account { address, owner } => process_get_account(&cfg, address, owner),
         AuthCommand::CreateAccount {} => process_create_account(&cfg),
         AuthCommand::DeriveAccount { owner } => process_derive_account(&cfg, owner),
     }
+}
+
+/// The function handler to get the deserialized data for the derived
+/// user auth account and display in the terminal for the user to observe.
+fn process_get_account(
+    cfg: &Config,
+    address: &Option<Pubkey>,
+    owner: &Option<Pubkey>,
+) -> Result<()> {
+    let (program, signer) = create_program_client(cfg);
+    let owner_pk = owner.unwrap_or(signer.pubkey());
+    let auth_account = address.unwrap_or(derive_auth_account(&owner_pk, &program.id()));
+    let acc = program.account::<UserAuthentication>(auth_account)?;
+    println!("{:#?}", acc);
+    Ok(())
 }
 
 /// The function handler for the auth subcommand that allows

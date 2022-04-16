@@ -24,7 +24,7 @@ pub const DEFAULT_STAKE_POOL: &str = "4o7XLNe2NYtcxhFpiXYKSobgodsuQvHgxKriDiYqE2
 pub enum StakingCommand {
     /// Get the account data for user's stake account.
     Account {
-        /// Base-58 public key of the account.
+        /// Base-58 pubkey of the account.
         address: Option<Pubkey>,
         /// Base-58 pubkey of the account owner.
         #[clap(long, conflicts_with = "address")]

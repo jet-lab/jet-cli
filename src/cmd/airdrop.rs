@@ -30,7 +30,7 @@ pub enum AirdropCommand {
         only_pubkeys: bool,
         /// The stake pool associated with the airdrop(s).
         #[clap(long, default_value = DEFAULT_STAKE_POOL)]
-        pool: Pubkey,
+        stake_pool: Pubkey,
     },
 }
 
@@ -44,7 +44,10 @@ pub fn entry(
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
         AirdropCommand::Claim { airdrop } => process_claim(&cfg, airdrop),
-        AirdropCommand::List { only_pubkeys, pool } => process_list(&cfg, *only_pubkeys, pool),
+        AirdropCommand::List {
+            only_pubkeys,
+            stake_pool,
+        } => process_list(&cfg, *only_pubkeys, stake_pool),
     }
 }
 
