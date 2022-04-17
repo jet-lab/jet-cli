@@ -15,7 +15,7 @@ use crate::config::{Config, ConfigOverride};
 use crate::macros::*;
 use crate::program::*;
 use crate::pubkey::*;
-use crate::terminal::Spinner;
+use crate::terminal::{print_struct, Spinner};
 
 pub const DEFAULT_STAKE_POOL: &str = "4o7XLNe2NYtcxhFpiXYKSobgodsuQvHgxKriDiYqE2tP";
 
@@ -26,12 +26,18 @@ pub enum StakingCommand {
     Account {
         /// Base-58 pubkey of the account.
         address: Option<Pubkey>,
+        /// Output data as serialized JSON.
+        #[clap(long)]
+        json: bool,
         /// Base-58 pubkey of the account owner.
         #[clap(long, conflicts_with = "address")]
         owner: Option<Pubkey>,
         /// The stake pool associated with the account.
         #[clap(long, conflicts_with = "address", default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
+        /// Formatted data output.
+        #[clap(long)]
+        pretty: bool,
     },
     /// Deposit to a stake pool from your account.
     Add {
@@ -97,6 +103,12 @@ pub enum StakingCommand {
         /// Base-58 public key of the pool.
         #[clap(default_value = DEFAULT_STAKE_POOL)]
         address: Pubkey,
+        /// Output data as serialized JSON.
+        #[clap(long)]
+        json: bool,
+        /// Formatted data output.
+        #[clap(long)]
+        pretty: bool,
     },
     /// Withdraw bonded stake funds from a pool.
     WithdrawBonded {
@@ -138,9 +150,11 @@ pub fn entry(
     match subcmd {
         StakingCommand::Account {
             address,
+            json,
             owner,
             pool,
-        } => process_get_account(&cfg, address, owner, pool),
+            pretty,
+        } => process_get_account(&cfg, address, *json, owner, pool, *pretty),
         StakingCommand::Add { amount, pool } => process_add_stake(&cfg, amount, pool),
         StakingCommand::CloseAccount { pool, receiver } => {
             process_close_account(&cfg, pool, receiver)
@@ -156,7 +170,11 @@ pub fn entry(
         StakingCommand::DerivePool { seed, show_related } => {
             process_derive_pool(&cfg, seed, *show_related)
         }
-        StakingCommand::Pool { address } => process_get_pool(&cfg, address),
+        StakingCommand::Pool {
+            address,
+            json,
+            pretty,
+        } => process_get_pool(&cfg, address, *json, *pretty),
         StakingCommand::WithdrawBonded {
             amount,
             pool,
@@ -178,15 +196,19 @@ pub fn entry(
 fn process_get_account(
     cfg: &Config,
     address: &Option<Pubkey>,
+    json: bool,
     owner: &Option<Pubkey>,
     pool: &Pubkey,
+    pretty: bool,
 ) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
     let owner_pk = owner.unwrap_or(signer.pubkey());
     let stake_account = address.unwrap_or(derive_stake_account(pool, &owner_pk, &program.id()));
-    let acc = program.account::<StakeAccount>(stake_account)?;
-    println!("{:#?}", acc);
-    Ok(())
+    print_struct(
+        program.account::<StakeAccount>(stake_account)?,
+        json,
+        pretty,
+    )
 }
 
 /// The function handler for the staking subcommand that allows users to add
@@ -400,11 +422,9 @@ fn process_derive_pool(cfg: &Config, seed: &str, show_related: bool) -> Result<(
 }
 
 /// The function handler to fetch and view the data from a stake pool account.
-fn process_get_pool(cfg: &Config, address: &Pubkey) -> Result<()> {
+fn process_get_pool(cfg: &Config, address: &Pubkey, json: bool, pretty: bool) -> Result<()> {
     let (program, _) = create_program_client(cfg);
-    let stake_pool: StakePool = program.account(*address)?;
-    println!("{:#?}", stake_pool);
-    Ok(())
+    print_struct(program.account::<StakePool>(*address)?, json, pretty)
 }
 
 /// The function handler for the staking subcommand that allows users to

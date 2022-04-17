@@ -9,6 +9,7 @@ use crate::config::{Config, ConfigOverride};
 use crate::macros::*;
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::derive_auth_account;
+use crate::terminal::print_struct;
 
 /// Auth program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -17,9 +18,15 @@ pub enum AuthCommand {
     Account {
         /// Base-58 public key of the account.
         address: Option<Pubkey>,
+        /// Output data as serialized JSON.
+        #[clap(long)]
+        json: bool,
         /// Base-58 public key of the account owner.
         #[clap(long, conflicts_with = "address")]
         owner: Option<Pubkey>,
+        /// Formatted data output.
+        #[clap(long)]
+        pretty: bool,
     },
     /// Create a new auth account.
     CreateAccount {},
@@ -36,7 +43,12 @@ pub enum AuthCommand {
 pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &AuthCommand) -> Result<()> {
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
-        AuthCommand::Account { address, owner } => process_get_account(&cfg, address, owner),
+        AuthCommand::Account {
+            address,
+            json,
+            owner,
+            pretty,
+        } => process_get_account(&cfg, address, *json, owner, *pretty),
         AuthCommand::CreateAccount {} => process_create_account(&cfg),
         AuthCommand::DeriveAccount { owner } => process_derive_account(&cfg, owner),
     }
@@ -47,14 +59,18 @@ pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &AuthComma
 fn process_get_account(
     cfg: &Config,
     address: &Option<Pubkey>,
+    json: bool,
     owner: &Option<Pubkey>,
+    pretty: bool,
 ) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
     let owner_pk = owner.unwrap_or(signer.pubkey());
     let auth_account = address.unwrap_or(derive_auth_account(&owner_pk, &program.id()));
-    let acc = program.account::<UserAuthentication>(auth_account)?;
-    println!("{:#?}", acc);
-    Ok(())
+    print_struct(
+        program.account::<UserAuthentication>(auth_account)?,
+        json,
+        pretty,
+    )
 }
 
 /// The function handler for the auth subcommand that allows

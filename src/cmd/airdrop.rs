@@ -120,8 +120,8 @@ fn process_list(cfg: &Config, only_pubkeys: bool, pool: &Pubkey) -> Result<()> {
         airdrops.for_each(|drop| println!("{}", drop.unwrap().0));
     } else {
         println!("Airdrops of {}:", pool);
-        airdrops.enumerate().for_each(|(i, drop)| {
-            let a = drop.unwrap();
+        for (i, drop) in airdrops.enumerate() {
+            let a = drop?;
             let naive_dt = NaiveDateTime::from_timestamp(a.1.expire_at, 0);
             let dt: DateTime<Utc> = DateTime::from_utc(naive_dt, Utc);
 
@@ -134,8 +134,10 @@ fn process_list(cfg: &Config, only_pubkeys: bool, pool: &Pubkey) -> Result<()> {
                 "Description: {}",
                 String::from_utf8(a.1.long_desc.to_vec()).unwrap()
             );
-        });
+        }
     }
+
+    // TODO: use `print_struct`?
 
     Ok(())
 }

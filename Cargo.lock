@@ -1431,9 +1431,9 @@ dependencies = [
 
 [[package]]
 name = "ipnet"
-version = "2.4.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35e70ee094dc02fd9c13fdad4940090f22dbd6ac7c9e7094a46cf0232a50bc7c"
+checksum = "879d54834c8c76457ef4293a689b2a8c59b076067ad77b15efafbb05f92a592b"
 
 [[package]]
 name = "itertools"
@@ -1462,14 +1462,24 @@ dependencies = [
  "dialoguer 0.10.0",
  "dirs",
  "indicatif",
- "jet-proto-auth",
+ "jet-proto-auth 1.0.0 (git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization)",
  "jet-proto-margin",
  "jet-proto-rewards",
- "jet-proto-staking",
+ "jet-proto-staking 1.0.0 (git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization)",
+ "serde",
  "serde_json",
  "shellexpand",
  "spl-associated-token-account",
  "spl-governance 2.1.4",
+]
+
+[[package]]
+name = "jet-proto-auth"
+version = "1.0.0"
+source = "git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization#a7cb72820ee98fe34758e6578d705ef97e01a068"
+dependencies = [
+ "anchor-lang",
+ "serde",
 ]
 
 [[package]]
@@ -1535,8 +1545,23 @@ dependencies = [
  "bitflags",
  "bytemuck",
  "jet-proto-proc-macros",
- "jet-proto-staking",
+ "jet-proto-staking 1.0.0 (git+https://github.com/jet-lab/jet-governance?branch=master)",
  "static_assertions",
+]
+
+[[package]]
+name = "jet-proto-staking"
+version = "1.0.0"
+source = "git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization#a7cb72820ee98fe34758e6578d705ef97e01a068"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "jet-proto-auth 1.0.0 (git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization)",
+ "serde",
+ "solana-program",
+ "spl-governance 2.2.4",
+ "spl-governance-addin-api",
+ "spl-governance-tools 0.1.2",
 ]
 
 [[package]]
@@ -1546,7 +1571,7 @@ source = "git+https://github.com/jet-lab/jet-governance?branch=master#c766ac5cb2
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "jet-proto-auth",
+ "jet-proto-auth 1.0.0 (git+https://github.com/jet-lab/jet-governance?branch=master)",
  "solana-program",
  "spl-governance 2.2.4",
  "spl-governance-addin-api",
