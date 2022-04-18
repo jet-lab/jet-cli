@@ -9,7 +9,7 @@ use crate::config::{Config, ConfigOverride};
 use crate::macros::*;
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::derive_auth_account;
-use crate::terminal::{print_struct, DisplayOptions};
+use crate::terminal::{print_serialized, DisplayOptions};
 
 /// Auth program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -70,7 +70,7 @@ fn process_get_account(
     let (program, signer) = create_program_client(cfg);
     let owner_pk = owner.unwrap_or(signer.pubkey());
     let auth_account = address.unwrap_or(derive_auth_account(&owner_pk, &program.id()));
-    print_struct(
+    print_serialized(
         program.account::<UserAuthentication>(auth_account)?,
         &display,
     )

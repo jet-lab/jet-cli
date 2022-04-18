@@ -12,7 +12,7 @@ use super::staking::DEFAULT_STAKE_POOL;
 use crate::config::{Config, ConfigOverride};
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::{derive_stake_account, derive_voter_weight_record};
-use crate::terminal::{print_struct, print_struct_list, DisplayOptions};
+use crate::terminal::{print_serialized, DisplayOptions};
 
 /// Rewards program based subcommand enum variants for airdrops.
 #[derive(Debug, Subcommand)]
@@ -74,7 +74,7 @@ pub fn entry(
 /// and display the content in the terminal for observation.
 fn process_get_account(cfg: &Config, address: &Pubkey, display: DisplayOptions) -> Result<()> {
     let (program, _) = create_program_client(cfg);
-    print_struct(program.account::<Airdrop>(*address)?, &display)
+    print_serialized(program.account::<Airdrop>(*address)?, &display)
 }
 
 /// The function handler to allow a user to claim a rewards airdrop
@@ -145,5 +145,5 @@ fn process_list(cfg: &Config, pool: &Pubkey, display: DisplayOptions) -> Result<
         deserialized.push(airdrop?.1);
     }
 
-    print_struct_list(deserialized.as_slice(), &display)
+    print_serialized(deserialized, &display)
 }

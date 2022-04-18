@@ -54,35 +54,7 @@ impl Spinner {
 /// Standardize function for printing structs that implement both `std::fmt::Debug`
 /// and `serde::ser::Serialize` (JSON) to be printed to the terminal is either format
 /// with the option to be pretty printed.
-pub(crate) fn print_struct<T: Debug + Serialize>(s: T, opts: &DisplayOptions) -> Result<()> {
-    if opts.json {
-        println!(
-            "{}",
-            if opts.pretty {
-                serde_json::to_string_pretty(&s)?
-            } else {
-                serde_json::to_string(&s)?
-            }
-        );
-        return Ok(());
-    }
-
-    if opts.pretty {
-        println!("{:#?}", s);
-    } else {
-        println!("{:?}", s);
-    }
-
-    Ok(())
-}
-
-/// Standardize function for printing a list of structs that implement both `std::fmt::Debug`
-/// and `serde::ser::Serialize` (JSON) to be printed to the terminal is either format with
-/// the option to be pretty printed.
-pub(crate) fn print_struct_list<T: Debug + Serialize>(
-    s: &[T],
-    opts: &DisplayOptions,
-) -> Result<()> {
+pub(crate) fn print_serialized<T: Debug + Serialize>(s: T, opts: &DisplayOptions) -> Result<()> {
     if opts.json {
         println!(
             "{}",

@@ -15,7 +15,7 @@ use crate::config::{Config, ConfigOverride};
 use crate::macros::*;
 use crate::program::*;
 use crate::pubkey::*;
-use crate::terminal::{print_struct, DisplayOptions, Spinner};
+use crate::terminal::{print_serialized, DisplayOptions, Spinner};
 
 pub const DEFAULT_STAKE_POOL: &str = "4o7XLNe2NYtcxhFpiXYKSobgodsuQvHgxKriDiYqE2tP";
 
@@ -209,7 +209,7 @@ fn process_get_account(
     let (program, signer) = create_program_client(cfg);
     let owner_pk = owner.unwrap_or(signer.pubkey());
     let stake_account = address.unwrap_or(derive_stake_account(pool, &owner_pk, &program.id()));
-    print_struct(program.account::<StakeAccount>(stake_account)?, &display)
+    print_serialized(program.account::<StakeAccount>(stake_account)?, &display)
 }
 
 /// The function handler for the staking subcommand that allows users to add
@@ -425,7 +425,7 @@ fn process_derive_pool(cfg: &Config, seed: &str, show_related: bool) -> Result<(
 /// The function handler to fetch and view the data from a stake pool account.
 fn process_get_pool(cfg: &Config, address: &Pubkey, display: DisplayOptions) -> Result<()> {
     let (program, _) = create_program_client(cfg);
-    print_struct(program.account::<StakePool>(*address)?, &display)
+    print_serialized(program.account::<StakePool>(*address)?, &display)
 }
 
 /// The function handler for the staking subcommand that allows users to
