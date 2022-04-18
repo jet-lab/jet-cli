@@ -16,14 +16,13 @@ default = []
 anchor-client = { git = "https://github.com/jet-lab/anchor", branch = "master" }
 anchor-spl = { git = "https://github.com/jet-lab/anchor", branch = "master" }
 anyhow = "1.0"
-chrono = "0.4"
 clap = { version = "3.1", features = ["derive"] }
 dialoguer = "0.10"
 dirs = "4.0"
 indicatif = "0.16"
 jet-proto-auth = { git = "https://github.com/jet-lab/jet-governance", branch = "ft/struct-json-serialization", features = ["cli"] }
 jet-proto-margin = { path = "./jet-margin/programs/margin", features = ["no-entrypoint"] }
-jet-proto-rewards = { git = "https://github.com/jet-lab/jet-governance", branch = "master", features = ["no-entrypoint"] }
+jet-proto-rewards = { git = "https://github.com/jet-lab/jet-governance", branch = "ft/struct-json-serialization", features = ["cli"] }
 jet-proto-staking = { git = "https://github.com/jet-lab/jet-governance", branch = "ft/struct-json-serialization", features = ["cli"] }
 serde = "1.0"
 serde_json = "1.0"

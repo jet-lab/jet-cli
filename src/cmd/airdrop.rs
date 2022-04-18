@@ -1,10 +1,8 @@
 use anchor_client::solana_client::rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType};
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Signer;
-use anchor_client::ProgramAccountsIterator;
 use anchor_spl::token::ID as token_program;
 use anyhow::Result;
-use chrono::{DateTime, NaiveDateTime, Utc};
 use clap::Subcommand;
 use jet_rewards::state::Airdrop;
 use jet_rewards::{accounts, instruction};
@@ -14,10 +12,22 @@ use super::staking::DEFAULT_STAKE_POOL;
 use crate::config::{Config, ConfigOverride};
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::{derive_stake_account, derive_voter_weight_record};
+use crate::terminal::{print_struct, print_struct_list, DisplayOptions};
 
 /// Rewards program based subcommand enum variants for airdrops.
 #[derive(Debug, Subcommand)]
 pub enum AirdropCommand {
+    /// Get account data for airdrop account.
+    Account {
+        /// Base-58 public key of the account.
+        address: Pubkey,
+        /// Output data as serialized JSON.
+        #[clap(long)]
+        json: bool,
+        /// Formatted data output.
+        #[clap(long)]
+        pretty: bool,
+    },
     /// Claim rewards airdrop.
     Claim {
         /// The public key of the target airdrop.
@@ -25,9 +35,12 @@ pub enum AirdropCommand {
     },
     /// List all airdrops for a stake pool.
     List {
-        /// Only display the list of airdrop pubkeys.
+        /// Output data as serialized JSON.
         #[clap(long)]
-        only_pubkeys: bool,
+        json: bool,
+        /// Formatted data output.
+        #[clap(long)]
+        pretty: bool,
         /// The stake pool associated with the airdrop(s).
         #[clap(long, default_value = DEFAULT_STAKE_POOL)]
         stake_pool: Pubkey,
@@ -43,12 +56,25 @@ pub fn entry(
 ) -> Result<()> {
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
+        AirdropCommand::Account {
+            address,
+            json,
+            pretty,
+        } => process_get_account(&cfg, address, DisplayOptions::from_args(*json, *pretty)),
         AirdropCommand::Claim { airdrop } => process_claim(&cfg, airdrop),
         AirdropCommand::List {
-            only_pubkeys,
+            json,
+            pretty,
             stake_pool,
-        } => process_list(&cfg, *only_pubkeys, stake_pool),
+        } => process_list(&cfg, stake_pool, DisplayOptions::from_args(*json, *pretty)),
     }
+}
+
+/// The function handler to get the airdrop program account of the argued public key
+/// and display the content in the terminal for observation.
+fn process_get_account(cfg: &Config, address: &Pubkey, display: DisplayOptions) -> Result<()> {
+    let (program, _) = create_program_client(cfg);
+    print_struct(program.account::<Airdrop>(*address)?, &display)
 }
 
 /// The function handler to allow a user to claim a rewards airdrop
@@ -102,7 +128,7 @@ fn process_claim(cfg: &Config, airdrop: &Pubkey) -> Result<()> {
 
 /// The function handler for retrieving and displaying the list of airdrop accounts
 /// discovered via their stake pool association with the provided public key.
-fn process_list(cfg: &Config, only_pubkeys: bool, pool: &Pubkey) -> Result<()> {
+fn process_list(cfg: &Config, pool: &Pubkey, display: DisplayOptions) -> Result<()> {
     let (program, _) = create_program_client(cfg);
 
     let filters = vec![
@@ -114,30 +140,10 @@ fn process_list(cfg: &Config, only_pubkeys: bool, pool: &Pubkey) -> Result<()> {
         }),
     ];
 
-    let airdrops: ProgramAccountsIterator<Airdrop> = program.accounts_lazy(filters)?;
-
-    if only_pubkeys {
-        airdrops.for_each(|drop| println!("{}", drop.unwrap().0));
-    } else {
-        println!("Airdrops of {}:", pool);
-        for (i, drop) in airdrops.enumerate() {
-            let a = drop?;
-            let naive_dt = NaiveDateTime::from_timestamp(a.1.expire_at, 0);
-            let dt: DateTime<Utc> = DateTime::from_utc(naive_dt, Utc);
-
-            println!();
-            println!("[{}]", i + 1);
-            println!("Pubkey:      {}", a.0);
-            println!("Vault:       {}", a.1.reward_vault);
-            println!("Expiration:  {} (chain clock time)", dt);
-            println!(
-                "Description: {}",
-                String::from_utf8(a.1.long_desc.to_vec()).unwrap()
-            );
-        }
+    let mut deserialized = Vec::<Airdrop>::new();
+    for airdrop in program.accounts_lazy::<Airdrop>(filters)? {
+        deserialized.push(airdrop?.1);
     }
 
-    // TODO: use `print_struct`?
-
-    Ok(())
+    print_struct_list(deserialized.as_slice(), &display)
 }
