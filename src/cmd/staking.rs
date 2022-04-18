@@ -15,7 +15,7 @@ use crate::config::{Config, ConfigOverride};
 use crate::macros::*;
 use crate::program::*;
 use crate::pubkey::*;
-use crate::terminal::{print_struct, Spinner};
+use crate::terminal::{print_struct, DisplayOptions, Spinner};
 
 pub const DEFAULT_STAKE_POOL: &str = "4o7XLNe2NYtcxhFpiXYKSobgodsuQvHgxKriDiYqE2tP";
 
@@ -154,7 +154,13 @@ pub fn entry(
             owner,
             pool,
             pretty,
-        } => process_get_account(&cfg, address, *json, owner, pool, *pretty),
+        } => process_get_account(
+            &cfg,
+            address,
+            owner,
+            pool,
+            DisplayOptions::from_args(*json, *pretty),
+        ),
         StakingCommand::Add { amount, pool } => process_add_stake(&cfg, amount, pool),
         StakingCommand::CloseAccount { pool, receiver } => {
             process_close_account(&cfg, pool, receiver)
@@ -174,7 +180,7 @@ pub fn entry(
             address,
             json,
             pretty,
-        } => process_get_pool(&cfg, address, *json, *pretty),
+        } => process_get_pool(&cfg, address, DisplayOptions::from_args(*json, *pretty)),
         StakingCommand::WithdrawBonded {
             amount,
             pool,
@@ -196,19 +202,14 @@ pub fn entry(
 fn process_get_account(
     cfg: &Config,
     address: &Option<Pubkey>,
-    json: bool,
     owner: &Option<Pubkey>,
     pool: &Pubkey,
-    pretty: bool,
+    display: DisplayOptions,
 ) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
     let owner_pk = owner.unwrap_or(signer.pubkey());
     let stake_account = address.unwrap_or(derive_stake_account(pool, &owner_pk, &program.id()));
-    print_struct(
-        program.account::<StakeAccount>(stake_account)?,
-        json,
-        pretty,
-    )
+    print_struct(program.account::<StakeAccount>(stake_account)?, &display)
 }
 
 /// The function handler for the staking subcommand that allows users to add
@@ -422,9 +423,9 @@ fn process_derive_pool(cfg: &Config, seed: &str, show_related: bool) -> Result<(
 }
 
 /// The function handler to fetch and view the data from a stake pool account.
-fn process_get_pool(cfg: &Config, address: &Pubkey, json: bool, pretty: bool) -> Result<()> {
+fn process_get_pool(cfg: &Config, address: &Pubkey, display: DisplayOptions) -> Result<()> {
     let (program, _) = create_program_client(cfg);
-    print_struct(program.account::<StakePool>(*address)?, json, pretty)
+    print_struct(program.account::<StakePool>(*address)?, &display)
 }
 
 /// The function handler for the staking subcommand that allows users to

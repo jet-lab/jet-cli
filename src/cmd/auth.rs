@@ -9,7 +9,7 @@ use crate::config::{Config, ConfigOverride};
 use crate::macros::*;
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::derive_auth_account;
-use crate::terminal::print_struct;
+use crate::terminal::{print_struct, DisplayOptions};
 
 /// Auth program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -48,7 +48,12 @@ pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &AuthComma
             json,
             owner,
             pretty,
-        } => process_get_account(&cfg, address, *json, owner, *pretty),
+        } => process_get_account(
+            &cfg,
+            address,
+            owner,
+            DisplayOptions::from_args(*json, *pretty),
+        ),
         AuthCommand::CreateAccount {} => process_create_account(&cfg),
         AuthCommand::DeriveAccount { owner } => process_derive_account(&cfg, owner),
     }
@@ -59,17 +64,15 @@ pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &AuthComma
 fn process_get_account(
     cfg: &Config,
     address: &Option<Pubkey>,
-    json: bool,
     owner: &Option<Pubkey>,
-    pretty: bool,
+    display: DisplayOptions,
 ) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
     let owner_pk = owner.unwrap_or(signer.pubkey());
     let auth_account = address.unwrap_or(derive_auth_account(&owner_pk, &program.id()));
     print_struct(
         program.account::<UserAuthentication>(auth_account)?,
-        json,
-        pretty,
+        &display,
     )
 }
 
