@@ -13,13 +13,13 @@ pub(crate) fn derive_auth_account(owner: &Pubkey, auth_program: &Pubkey) -> Pubk
 }
 
 /// Derive the public key of a `jet_margin::MarginAccount` program account.
-// pub(crate) fn derive_margin_account(owner: &Pubkey, seed: u16, margin_program: &Pubkey) -> Pubkey {
-//     Pubkey::find_program_address(
-//         &[owner.as_ref(), seed.to_le_bytes().as_ref()],
-//         margin_program,
-//     )
-//     .0
-// }
+pub(crate) fn derive_margin_account(owner: &Pubkey, seed: u16, margin_program: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(
+        &[owner.as_ref(), seed.to_le_bytes().as_ref()],
+        margin_program,
+    )
+    .0
+}
 
 /// Derive the public key of a governance max vote weight record program account.
 pub(crate) fn derive_max_voter_weight_record(realm: &Pubkey, staking_program: &Pubkey) -> Pubkey {
@@ -82,14 +82,14 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn derive_correct_margin_address() {
-    //     let margin = derive_margin_account(&Pubkey::default(), 15, &jet_margin::ID);
-    //     assert_eq!(
-    //         margin.to_string(),
-    //         "F8VbfbXdyeTonhEj2hs3mNb8VUpoYd78wPreLQSqRzj8"
-    //     );
-    // }
+    #[test]
+    fn derive_correct_margin_address() {
+        let margin = derive_margin_account(&Pubkey::default(), 15, &jet_margin::ID);
+        assert_eq!(
+            margin.to_string(),
+            "F8VbfbXdyeTonhEj2hs3mNb8VUpoYd78wPreLQSqRzj8"
+        );
+    }
 
     #[test]
     fn derive_correct_max_vote_weight_record() {

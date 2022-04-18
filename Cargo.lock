@@ -282,15 +282,15 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "backtrace"
-version = "0.3.64"
+version = "0.3.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e121dee8023ce33ab248d9ce1493df03c3b38a659b240096fcbd7048ff9c31f"
+checksum = "11a17d453482a265fd5f8479f2a3f405566e6ca627837aaddb85af8b1ab8ef61"
 dependencies = [
  "addr2line",
  "cc",
  "cfg-if",
  "libc",
- "miniz_oxide 0.4.4",
+ "miniz_oxide",
  "object",
  "rustc-demangle",
 ]
@@ -1035,7 +1035,7 @@ dependencies = [
  "cfg-if",
  "crc32fast",
  "libc",
- "miniz_oxide 0.5.1",
+ "miniz_oxide",
 ]
 
 [[package]]
@@ -1431,9 +1431,9 @@ dependencies = [
 
 [[package]]
 name = "ipnet"
-version = "2.4.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35e70ee094dc02fd9c13fdad4940090f22dbd6ac7c9e7094a46cf0232a50bc7c"
+checksum = "879d54834c8c76457ef4293a689b2a8c59b076067ad77b15efafbb05f92a592b"
 
 [[package]]
 name = "itertools"
@@ -1462,9 +1462,11 @@ dependencies = [
  "dialoguer 0.10.0",
  "dirs",
  "indicatif",
- "jet-proto-auth",
+ "jet-proto-auth 1.0.0 (git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization)",
+ "jet-proto-margin",
  "jet-proto-rewards",
- "jet-proto-staking",
+ "jet-proto-staking 1.0.0 (git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization)",
+ "serde",
  "serde_json",
  "shellexpand",
  "spl-associated-token-account",
@@ -1474,9 +1476,51 @@ dependencies = [
 [[package]]
 name = "jet-proto-auth"
 version = "1.0.0"
+source = "git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization#2515b72dbd0e5ea88d870d71a1df023432a95685"
+dependencies = [
+ "anchor-lang",
+ "serde",
+]
+
+[[package]]
+name = "jet-proto-auth"
+version = "1.0.0"
 source = "git+https://github.com/jet-lab/jet-governance?branch=master#c766ac5cb265c206a1ca6e805274403c8e1b7207"
 dependencies = [
  "anchor-lang",
+]
+
+[[package]]
+name = "jet-proto-margin"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bytemuck",
+ "jet-proto-math",
+ "jet-proto-metadata",
+ "jet-proto-proc-macros",
+ "pyth-client",
+ "static_assertions",
+]
+
+[[package]]
+name = "jet-proto-math"
+version = "1.0.3"
+source = "git+https://github.com/jet-lab/program-libraries?branch=main#25691bffb5efe68ce8d6e65a098924f0e1d129b6"
+dependencies = [
+ "bytemuck",
+ "static_assertions",
+ "thiserror",
+ "uint",
+]
+
+[[package]]
+name = "jet-proto-metadata"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "solana-program",
 ]
 
 [[package]]
@@ -1501,8 +1545,23 @@ dependencies = [
  "bitflags",
  "bytemuck",
  "jet-proto-proc-macros",
- "jet-proto-staking",
+ "jet-proto-staking 1.0.0 (git+https://github.com/jet-lab/jet-governance?branch=master)",
  "static_assertions",
+]
+
+[[package]]
+name = "jet-proto-staking"
+version = "1.0.0"
+source = "git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization#2515b72dbd0e5ea88d870d71a1df023432a95685"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "jet-proto-auth 1.0.0 (git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization)",
+ "serde",
+ "solana-program",
+ "spl-governance 2.2.4",
+ "spl-governance-addin-api",
+ "spl-governance-tools 0.1.2",
 ]
 
 [[package]]
@@ -1512,7 +1571,7 @@ source = "git+https://github.com/jet-lab/jet-governance?branch=master#c766ac5cb2
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "jet-proto-auth",
+ "jet-proto-auth 1.0.0 (git+https://github.com/jet-lab/jet-governance?branch=master)",
  "solana-program",
  "spl-governance 2.2.4",
  "spl-governance-addin-api",
@@ -1691,16 +1750,6 @@ checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
 
 [[package]]
 name = "miniz_oxide"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a92518e98c078586bc6c934028adcca4c92a53d6a958196de835170a01d84e4b"
-dependencies = [
- "adler",
- "autocfg",
-]
-
-[[package]]
-name = "miniz_oxide"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2b29bd4bc3f33391105ebee3589c19197c4271e3e5a9ec9bfe8127eeff8f082"
@@ -1822,9 +1871,9 @@ checksum = "830b246a0e5f20af87141b25c173cd1b609bd7779a4617d6ec582abaf90870f3"
 
 [[package]]
 name = "object"
-version = "0.27.1"
+version = "0.28.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67ac1d3f9a1d3616fd9a60c8d74296f22406a238b6a72f5cc1e6f314df4ffbf9"
+checksum = "40bec70ba014595f99f7aa110b84331ffe1ee9aece7fe6f387cc7e3ecda4d456"
 dependencies = [
  "memchr",
 ]
@@ -2039,6 +2088,22 @@ dependencies = [
  "syn 1.0.91",
  "version_check",
  "yansi",
+]
+
+[[package]]
+name = "pyth-client"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f779e98b8c8016d0c1409247a204bd4fcdea8b67ceeef545f04e324d66c49e52"
+dependencies = [
+ "borsh",
+ "borsh-derive",
+ "bytemuck",
+ "num-derive",
+ "num-traits",
+ "serde",
+ "solana-program",
+ "thiserror",
 ]
 
 [[package]]
@@ -2283,6 +2348,12 @@ name = "rustc-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
+
+[[package]]
+name = "rustc-hex"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e75f6a532d0fd9f7f13144f392b6ad56a32696bfcd9c78f797f16bbb6f072d6"
 
 [[package]]
 name = "rustc_version"
@@ -3569,6 +3640,18 @@ name = "typenum"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
+
+[[package]]
+name = "uint"
+version = "0.8.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9db035e67dfaf7edd9aebfe8676afcd63eed53c8a4044fed514c8cccf1835177"
+dependencies = [
+ "byteorder",
+ "crunchy",
+ "rustc-hex",
+ "static_assertions",
+]
 
 [[package]]
 name = "unicode-bidi"

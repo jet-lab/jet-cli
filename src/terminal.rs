@@ -1,9 +1,26 @@
 use anyhow::{anyhow, Result};
 use dialoguer::Confirm;
 use indicatif::{ProgressBar, ProgressStyle};
+use serde::ser::Serialize;
 use std::borrow::Cow;
+use std::fmt::Debug;
 
 use super::config::Config;
+
+/// Wrapper utility struct for housing arguments provided in a command
+/// regarding the desired display serialization options for a printed
+/// program account data struct.
+pub(crate) struct DisplayOptions {
+    json: bool,
+    pretty: bool,
+}
+
+impl DisplayOptions {
+    /// Instantiate based on the values of the argument options.
+    pub fn from_args(json: bool, pretty: bool) -> Self {
+        Self { json, pretty }
+    }
+}
 
 /// Internal wrapper for the `indicatif::ProgressBar`.
 #[derive(Debug)]
@@ -32,6 +49,31 @@ impl Spinner {
             .set_style(ProgressStyle::default_spinner().template("✅ {msg}"));
         self.0.finish_with_message(msg);
     }
+}
+
+/// Standardize function for printing structs that implement both `std::fmt::Debug`
+/// and `serde::ser::Serialize` (JSON) to be printed to the terminal is either format
+/// with the option to be pretty printed.
+pub(crate) fn print_struct<T: Debug + Serialize>(s: T, opts: &DisplayOptions) -> Result<()> {
+    if opts.json {
+        println!(
+            "{}",
+            if opts.pretty {
+                serde_json::to_string_pretty(&s)?
+            } else {
+                serde_json::to_string(&s)?
+            }
+        );
+        return Ok(());
+    }
+
+    if opts.pretty {
+        println!("{:#?}", s);
+    } else {
+        println!("{:?}", s);
+    }
+
+    Ok(())
 }
 
 /// Provides the user a confirmation `(y/N)` option in their terminal
