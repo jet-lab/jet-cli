@@ -49,6 +49,15 @@ pub enum MarginCommand {
         #[clap(short, long)]
         seed: u16,
     },
+    /// Derive the public key of a margin account.
+    Derive {
+        /// Base-58 override of the account owner.
+        #[clap(long)]
+        owner: Option<Pubkey>,
+        /// The numerical seed for the account.
+        #[clap(short, long)]
+        seed: u16,
+    },
 }
 
 /// The main entry point and handler for all margin
@@ -76,6 +85,7 @@ pub fn entry(
             process_close_account(&cfg, receiver, *seed)
         }
         MarginCommand::CreateAccount { seed } => process_create_account(&cfg, *seed),
+        MarginCommand::Derive { owner, seed } => process_derive(&cfg, owner, *seed),
     }
 }
 
@@ -184,5 +194,13 @@ fn process_create_account(cfg: &Config, seed: u16) -> Result<()> {
 
     println!("Pubkey: {}", margin_account);
 
+    Ok(())
+}
+
+/// The function handler to derive the public key of a `jet_margin::MarginAccount`.
+fn process_derive(cfg: &Config, owner: &Option<Pubkey>, seed: u16) -> Result<()> {
+    let acc_owner = owner.unwrap_or(cfg.keypair.pubkey());
+    let pk = derive_margin_account(&acc_owner, seed, &cfg.program_id);
+    println!("{}", pk);
     Ok(())
 }

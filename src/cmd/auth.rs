@@ -31,7 +31,7 @@ pub enum AuthCommand {
     /// Create a new auth account.
     CreateAccount {},
     /// Derive the public key of an auth account.
-    DeriveAccount {
+    Derive {
         /// Base-58 override of the account owner.
         #[clap(long)]
         owner: Option<Pubkey>,
@@ -55,7 +55,7 @@ pub fn entry(overrides: &ConfigOverride, program_id: &Pubkey, subcmd: &AuthComma
             DisplayOptions::from_args(*json, *pretty),
         ),
         AuthCommand::CreateAccount {} => process_create_account(&cfg),
-        AuthCommand::DeriveAccount { owner } => process_derive_account(&cfg, owner),
+        AuthCommand::Derive { owner } => process_derive(&cfg, owner),
     }
 }
 
@@ -108,7 +108,7 @@ fn process_create_account(cfg: &Config) -> Result<()> {
 }
 
 /// The function handler to derive the public key of a `jet_auth::UserAuthentication` program account.
-fn process_derive_account(cfg: &Config, owner: &Option<Pubkey>) -> Result<()> {
+fn process_derive(cfg: &Config, owner: &Option<Pubkey>) -> Result<()> {
     let acc_owner = owner.unwrap_or(cfg.keypair.pubkey());
     let pk = derive_auth_account(&acc_owner, &cfg.program_id);
     println!("{}", pk);
