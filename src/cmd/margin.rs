@@ -10,15 +10,24 @@ use crate::config::{Config, ConfigOverride};
 use crate::macros::{assert_exists, assert_not_exists};
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::derive_margin_account;
+use crate::terminal::{print_serialized, DisplayOptions};
 
 /// Margin program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
 pub enum MarginCommand {
     /// Get the account data for a user's margin account.
     Account {
+        /// Base-58 public key of the margin account.
         address: Option<Pubkey>,
+        /// Output data as serialized JSON.
+        #[clap(long)]
+        json: bool,
+        /// Base-58 public key of the owner to use to derive.
         #[clap(long, conflicts_with = "address")]
         owner: Option<Pubkey>,
+        /// Formatted data output.
+        #[clap(long)]
+        pretty: bool,
     },
     /// Close your margin account.
     CloseAccount {
@@ -46,7 +55,17 @@ pub fn entry(
 ) -> Result<()> {
     let cfg = overrides.transform(*program_id)?;
     match subcmd {
-        MarginCommand::Account { address, owner } => process_get_account(&cfg, address, owner),
+        MarginCommand::Account {
+            address,
+            json,
+            owner,
+            pretty,
+        } => process_get_account(
+            &cfg,
+            address,
+            owner,
+            DisplayOptions::from_args(*json, *pretty),
+        ),
         MarginCommand::CloseAccount { receiver, seed } => {
             process_close_account(&cfg, receiver, *seed)
         }
@@ -54,41 +73,35 @@ pub fn entry(
     }
 }
 
+/// The function handler to fetch the margin program account data for the derive public key
+/// and display it in the terminal for the user to observe or parse.
 fn process_get_account(
     cfg: &Config,
     address: &Option<Pubkey>,
     owner: &Option<Pubkey>,
+    display: DisplayOptions,
 ) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
     let owner_pk = owner.unwrap_or(signer.pubkey());
 
     if let Some(addr) = address {
-        let acc = program.account::<MarginAccount>(*addr)?;
-        println!("{:#?}", acc);
-        return Ok(());
+        return print_serialized(program.account::<MarginAccount>(*addr)?, &display);
     }
 
-    let margins = program.accounts::<MarginAccount>(vec![
-        RpcFilterType::DataSize(8 + std::mem::size_of::<MarginAccount>() as u64),
-        RpcFilterType::Memcmp(Memcmp {
-            offset: 16,
-            bytes: MemcmpEncodedBytes::Bytes(owner_pk.to_bytes().to_vec()),
-            encoding: None,
-        }),
-    ])?;
+    let margins: Vec<MarginAccount> = program
+        .accounts(vec![
+            RpcFilterType::DataSize(8 + std::mem::size_of::<MarginAccount>() as u64),
+            RpcFilterType::Memcmp(Memcmp {
+                offset: 16,
+                bytes: MemcmpEncodedBytes::Bytes(owner_pk.to_bytes().to_vec()),
+                encoding: None,
+            }),
+        ])?
+        .iter()
+        .map(|acc| acc.1)
+        .collect();
 
-    for (i, margin) in margins.iter().enumerate() {
-        println!();
-        println!("[{}]", i + 1);
-        println!("Version:     v{}", margin.1.version);
-        println!("Pubkey:      {}", margin.0);
-        println!("Liquidation: {}", margin.1.liquidation);
-        println!("Liquidator:  {}", margin.1.liquidator);
-    }
-
-    // TODO:FIXME:
-
-    Ok(())
+    print_serialized(margins, &display)
 }
 
 /// The function handler to allow user's to close their margin account and receive back rent.
