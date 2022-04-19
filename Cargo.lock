@@ -1432,7 +1432,7 @@ checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
 
 [[package]]
 name = "jet-cli"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "anchor-client",
  "anchor-spl",
@@ -1454,7 +1454,7 @@ dependencies = [
 [[package]]
 name = "jet-proto-auth"
 version = "1.0.0"
-source = "git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization#a740f4926ee8168a0570456f77b41b16f9a2a2c4"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#877967b7f1422b5886d11de63a224d3d8cde1790"
 dependencies = [
  "anchor-lang",
  "serde",
@@ -1509,7 +1509,7 @@ dependencies = [
 [[package]]
 name = "jet-proto-rewards"
 version = "1.0.0"
-source = "git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization#a740f4926ee8168a0570456f77b41b16f9a2a2c4"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#877967b7f1422b5886d11de63a224d3d8cde1790"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -1524,7 +1524,7 @@ dependencies = [
 [[package]]
 name = "jet-proto-staking"
 version = "1.0.0"
-source = "git+https://github.com/jet-lab/jet-governance?branch=ft/struct-json-serialization#a740f4926ee8168a0570456f77b41b16f9a2a2c4"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#877967b7f1422b5886d11de63a224d3d8cde1790"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

@@ -1,6 +1,6 @@
 [package]
 name = "jet-cli"
-version = "0.1.2"
+version = "0.1.3"
 description = "Jet Protocol command line tool for program requests"
 edition = "2021"
 repository = "https://github.com/jet-lab/jet-cli"
@@ -19,10 +19,10 @@ anyhow = "1.0"
 clap = { version = "3.1", features = ["derive"] }
 dialoguer = "0.10"
 indicatif = "0.16"
-jet-proto-auth = { git = "https://github.com/jet-lab/jet-governance", branch = "ft/struct-json-serialization", features = ["cli"] }
+jet-proto-auth = { git = "https://github.com/jet-lab/jet-governance", branch = "master", features = ["cli"] }
 jet-proto-margin = { path = "./jet-margin/programs/margin", features = ["cli"] }
-jet-proto-rewards = { git = "https://github.com/jet-lab/jet-governance", branch = "ft/struct-json-serialization", features = ["cli"] }
-jet-proto-staking = { git = "https://github.com/jet-lab/jet-governance", branch = "ft/struct-json-serialization", features = ["cli"] }
+jet-proto-rewards = { git = "https://github.com/jet-lab/jet-governance", branch = "master", features = ["cli"] }
+jet-proto-staking = { git = "https://github.com/jet-lab/jet-governance", branch = "master", features = ["cli"] }
 serde = "1.0"
 serde_json = "1.0"
 shellexpand = "2.1"

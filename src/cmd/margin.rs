@@ -29,6 +29,11 @@ pub enum MarginCommand {
         #[clap(long)]
         pretty: bool,
     },
+    /// Check the health of the positions in a margin account.
+    Check {
+        /// Base-58 public key of the margin account.
+        address: Pubkey,
+    },
     /// Close your margin account.
     CloseAccount {
         /// (Optional) The public key to receive the rent.
@@ -66,6 +71,7 @@ pub fn entry(
             owner,
             DisplayOptions::from_args(*json, *pretty),
         ),
+        MarginCommand::Check { address } => process_check_health(&cfg, address),
         MarginCommand::CloseAccount { receiver, seed } => {
             process_close_account(&cfg, receiver, *seed)
         }
@@ -102,6 +108,27 @@ fn process_get_account(
         .collect();
 
     print_serialized(margins, &display)
+}
+
+/// The function handler to verify the health of the positions in a margin
+/// account via the `jet_margin::VerifyHealthy` transaction.
+fn process_check_health(cfg: &Config, address: &Pubkey) -> Result<()> {
+    let (program, _) = create_program_client(cfg);
+
+    send_with_approval(
+        cfg,
+        program
+            .request()
+            .accounts(accounts::VerifyHealthy {
+                margin_account: *address,
+            })
+            .args(instruction::VerifyHealthy {}),
+        Some(vec!["jet_margin::VerifyHealthy"]),
+    )?;
+
+    println!("Healthy!");
+
+    Ok(())
 }
 
 /// The function handler to allow user's to close their margin account and receive back rent.
