@@ -36,7 +36,7 @@ pub enum MarginCommand {
     },
     /// Close your margin account.
     CloseAccount {
-        /// (Optional) The public key to receive the rent.
+        /// The public key to receive the rent.
         #[clap(long)]
         receiver: Option<Pubkey>,
         /// The numerical seed for the account to close.
