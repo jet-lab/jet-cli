@@ -61,7 +61,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          fail_on_unmatched_files: true
           files: |
-            ./target/jet-cli-x86_64-apple-darwin.tar.gz
-            ./target/jet-cli-aarch64-apple-darwin.tar.gz
-            ./target/jet-cli-x86_64-unknown-linux-gnu.tar.gz
+            ./target/*/jet-cli-x86_64-apple-darwin.tar.gz
+            ./target/*/jet-cli-aarch64-apple-darwin.tar.gz
+            ./target/*/jet-cli-x86_64-unknown-linux-gnu.tar.gz
