@@ -28,6 +28,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           target: ${{ matrix.target }}
+          toolchain: stable
 
       - name: Build Target
         run: cargo build --target ${{ matrix.target }} --release --locked
