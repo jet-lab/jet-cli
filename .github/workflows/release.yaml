@@ -27,7 +27,7 @@ jobs:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          target: ${{ matrix.target }}
 
       - name: Build Target
         run: cargo build --target ${{ matrix.target }} --release --locked
