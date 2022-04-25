@@ -7,7 +7,7 @@
 
 ### Download Pre-built Binary (Recommended)
 
-Each release of the CLI contains a pre-built binary in a `.tar.gz` for the following targets:
+Each [release](https://github.com/jet-lab/jet-cli/releases) of the CLI contains a pre-built binary in a `.tar.gz` for the following targets:
 
 - `aarch64-apple-darwin`
 - `x86_64-apple-darwin`
