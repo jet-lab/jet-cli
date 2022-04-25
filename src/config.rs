@@ -2,7 +2,7 @@ use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Keypair;
 use anchor_client::Cluster;
 use anyhow::{anyhow, Result};
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use std::fs::read_to_string;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -18,7 +18,8 @@ pub struct ConfigOverride {
     #[clap(
         global = true,
         long = "keypair",
-        default_value = "~/.config/solana/id.json"
+        default_value = "~/.config/solana/id.json",
+        value_hint = ValueHint::FilePath,
     )]
     keypair_path: String,
     /// Override of the cluster to use.
