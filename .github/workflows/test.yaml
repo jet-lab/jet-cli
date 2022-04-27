@@ -13,15 +13,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup SSH
-        run: |
-          eval `ssh-agent -s`
-          ssh-add - <<< '${{ secrets.JET_MARGIN_DEPLOY_KEY }}'
-
       - name: Checkout
         uses: actions/checkout@v3
         with:
           submodules: true
+          token: ${{ secrets.SUBMODULE_TOKEN }}
 
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
