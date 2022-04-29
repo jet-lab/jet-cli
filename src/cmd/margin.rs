@@ -133,7 +133,7 @@ fn process_check_health(cfg: &Config, address: &Pubkey) -> Result<()> {
                 margin_account: *address,
             })
             .args(instruction::VerifyHealthy {}),
-        Some(vec!["jet_margin::VerifyHealthy"]),
+        vec!["jet_margin::VerifyHealthy"],
     )?;
 
     println!("Healthy!");
@@ -162,7 +162,7 @@ fn process_close_account(cfg: &Config, receiver: &Option<Pubkey>, seed: u16) -> 
             })
             .args(instruction::CloseAccount {})
             .signer(signer.as_ref()),
-        Some(vec!["jet_margin::CloseAccount"]),
+        vec!["jet_margin::CloseAccount"],
     )?;
 
     Ok(())
@@ -189,7 +189,7 @@ fn process_create_account(cfg: &Config, seed: u16) -> Result<()> {
             })
             .args(instruction::CreateAccount { seed })
             .signer(signer.as_ref()),
-        Some(vec!["jet_margin::CreateAccount"]),
+        vec!["jet_margin::CreateAccount"],
     )?;
 
     println!("Pubkey: {}", margin_account);

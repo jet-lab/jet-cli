@@ -274,7 +274,7 @@ fn process_add_stake(cfg: &Config, amount: &Option<u64>, pool: &Pubkey) -> Resul
     ix_names.push("jet_staking::AddStake");
     sp.finish_with_message("Instruction bytes compiled");
 
-    send_with_approval(cfg, req.signer(signer.as_ref()), Some(ix_names))
+    send_with_approval(cfg, req.signer(signer.as_ref()), ix_names)
 }
 
 /// The function handler for a user closing their staking account.
@@ -303,7 +303,7 @@ fn process_close_account(cfg: &Config, pool: &Pubkey, receiver: &Option<Pubkey>)
             })
             .args(instruction::CloseStakeAccount {})
             .signer(signer.as_ref()),
-        Some(vec!["jet_staking::CloseStakeAccount"]),
+        vec!["jet_staking::CloseStakeAccount"],
     )
 }
 
@@ -337,7 +337,7 @@ fn process_create_account(cfg: &Config, pool: &Pubkey) -> Result<()> {
             })
             .args(instruction::InitStakeAccount {})
             .signer(signer.as_ref()),
-        Some(vec!["jet_staking::InitStakeAccount"]),
+        vec!["jet_staking::InitStakeAccount"],
     )?;
 
     println!("Pubkey: {}", stake_account);
@@ -392,7 +392,7 @@ fn process_create_pool(
                 },
             })
             .signer(signer.as_ref()),
-        Some(vec!["jet_staking::InitPool"]),
+        vec!["jet_staking::InitPool"],
     )?;
 
     println!("Pubkey: {}", pool);
@@ -458,7 +458,7 @@ fn process_withdraw_bonded(
             })
             .args(instruction::WithdrawBonded { amount })
             .signer(signer.as_ref()),
-        Some(vec!["jet_staking::WithdrawBonded"]),
+        vec!["jet_staking::WithdrawBonded"],
     )
 }
 
@@ -499,6 +499,6 @@ fn process_withdraw_unbonded(
             })
             .args(instruction::WithdrawUnbonded {})
             .signer(signer.as_ref()),
-        Some(vec!["jet_staking::WithdrawUnbonded"]),
+        vec!["jet_staking::WithdrawUnbonded"],
     )
 }

@@ -35,9 +35,9 @@ pub(crate) fn create_program_client(config: &Config) -> (Program, Rc<Keypair>) {
 pub(crate) fn send_with_approval(
     config: &Config,
     req: RequestBuilder,
-    ix_names: Option<Vec<&str>>,
+    ix_names: Vec<&str>,
 ) -> Result<()> {
-    request_approval(config, ix_names)?;
+    request_approval(config, Some(ix_names))?;
 
     let sp = Spinner::new("Sending transaction");
     let sig = req.send()?;

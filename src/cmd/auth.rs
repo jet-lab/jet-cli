@@ -99,7 +99,7 @@ fn process_create_account(cfg: &Config) -> Result<()> {
             })
             .args(instruction::CreateUserAuth {})
             .signer(signer.as_ref()),
-        Some(vec!["jet_auth::CreateUserAuthentication"]),
+        vec!["jet_auth::CreateUserAuthentication"],
     )?;
 
     println!("Pubkey: {}", auth);

@@ -122,7 +122,7 @@ fn process_claim(cfg: &Config, airdrop: &Pubkey) -> Result<()> {
             })
             .args(instruction::AirdropClaim {})
             .signer(signer.as_ref()),
-        Some(vec!["jet_rewards::AirdropClaim"]),
+        vec!["jet_rewards::AirdropClaim"],
     )
 }
 
