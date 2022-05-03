@@ -244,7 +244,7 @@ fn process_register(cfg: &Config, margin_account: &Pubkey, position_mint: &Pubke
         .map(|acc| acc.0)
         .collect();
 
-    if meta_accounts.len() == 0 {
+    if meta_accounts.is_empty() {
         return Err(anyhow!(
             "no `jet_metadata::PositionTokenMetadata` account for token mint {} was found",
             position_mint,
