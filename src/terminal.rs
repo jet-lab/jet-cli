@@ -10,7 +10,7 @@ use super::config::Config;
 /// Wrapper utility struct for housing arguments provided in a command
 /// regarding the desired display serialization options for a printed
 /// program account data struct.
-pub(crate) struct DisplayOptions {
+pub struct DisplayOptions {
     json: bool,
     pretty: bool,
 }
@@ -24,7 +24,7 @@ impl DisplayOptions {
 
 /// Internal wrapper for the `indicatif::ProgressBar`.
 #[derive(Debug)]
-pub(crate) struct Spinner(ProgressBar);
+pub struct Spinner(ProgressBar);
 
 impl Spinner {
     /// Create a new `indicatif::ProgressBar` spinner with
@@ -54,7 +54,7 @@ impl Spinner {
 /// Standardize function for printing structs that implement both `std::fmt::Debug`
 /// and `serde::ser::Serialize` (JSON) to be printed to the terminal is either format
 /// with the option to be pretty printed.
-pub(crate) fn print_serialized<T: Debug + Serialize>(s: T, opts: &DisplayOptions) -> Result<()> {
+pub fn print_serialized<T: Debug + Serialize>(s: T, opts: &DisplayOptions) -> Result<()> {
     if opts.json {
         println!(
             "{}",
@@ -83,7 +83,7 @@ pub(crate) fn print_serialized<T: Debug + Serialize>(s: T, opts: &DisplayOptions
 ///
 /// This should be called prior to sending any transactions on
 /// behalf of the end user.
-pub(crate) fn request_approval(config: &Config, ixs: Option<Vec<&str>>) -> Result<()> {
+pub fn request_approval(config: &Config, ixs: Option<Vec<&str>>) -> Result<()> {
     if let Some(names) = ixs {
         println!("Instructions to be processed:");
         for (i, ix) in names.iter().enumerate() {

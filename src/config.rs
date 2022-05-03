@@ -16,6 +16,7 @@ pub struct Overrides {
     /// Auto-approve the signing and execution of the command transaction(s).
     #[clap(global = true, long)]
     auto_approve: bool,
+    /// Override of the commitment level used for the RPC client.
     #[clap(global = true, long)]
     commitment: Option<CommitmentConfig>,
     /// Override of the path to the keypair to be used as signer.
@@ -139,8 +140,33 @@ fn normalize_path_arg(name: &str, val: &str) -> Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Cluster, Config, Overrides};
     use anchor_client::solana_sdk::pubkey::Pubkey;
+    use std::path::PathBuf;
+    use std::str::FromStr;
+
+    use super::*;
+
+    #[test]
+    fn path_normalization() {
+        let good_res = normalize_path_arg("--test", "/etc");
+        assert!(good_res.is_ok());
+        assert_eq!(good_res.unwrap(), PathBuf::from_str("/etc").unwrap());
+
+        let good_tilde_res = normalize_path_arg("--test", "~/.config/solana/id.json");
+        assert!(good_tilde_res.is_ok());
+        assert!(good_tilde_res.unwrap().starts_with("/"));
+
+        let bad_res = normalize_path_arg("--test", "/does/not/exist");
+        assert!(bad_res.is_err());
+        assert!(bad_res.unwrap_err().to_string().contains("invalid"));
+    }
+
+    #[test]
+    fn cfg_clone_with_new_program() {
+        let cfg = Config::new(&Overrides::default(), Pubkey::default()).unwrap();
+        let new_cfg = cfg.clone_with_program(Pubkey::new_from_array([5; 32]));
+        assert_ne!(new_cfg.program_id, Pubkey::default());
+    }
 
     #[test]
     fn cfg_persists_cluster() {

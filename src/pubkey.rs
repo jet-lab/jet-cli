@@ -1,19 +1,19 @@
 use anchor_client::solana_sdk::pubkey::Pubkey;
 
 #[derive(Debug)]
-pub(crate) struct StakePoolAddresses {
+pub struct StakePoolAddresses {
     pub pool: Pubkey,
     pub vault: Pubkey,
     pub collateral_mint: Pubkey,
 }
 
 /// Derive the public key of a `jet_auth::UserAuthentication` program account.
-pub(crate) fn derive_auth_account(owner: &Pubkey, auth_program: &Pubkey) -> Pubkey {
+pub fn derive_auth_account(owner: &Pubkey, auth_program: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(&[owner.as_ref()], auth_program).0
 }
 
 /// Derive the public key of a `jet_margin::MarginAccount` program account.
-pub(crate) fn derive_margin_account(owner: &Pubkey, seed: u16, margin_program: &Pubkey) -> Pubkey {
+pub fn derive_margin_account(owner: &Pubkey, seed: u16, margin_program: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(
         &[owner.as_ref(), seed.to_le_bytes().as_ref()],
         margin_program,
@@ -22,7 +22,7 @@ pub(crate) fn derive_margin_account(owner: &Pubkey, seed: u16, margin_program: &
 }
 
 /// Derive the public key of a governance max vote weight record program account.
-pub(crate) fn derive_max_voter_weight_record(realm: &Pubkey, staking_program: &Pubkey) -> Pubkey {
+pub fn derive_max_voter_weight_record(realm: &Pubkey, staking_program: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(
         &[realm.as_ref(), jet_staking::seeds::MAX_VOTE_WEIGHT_RECORD],
         staking_program,
@@ -31,7 +31,7 @@ pub(crate) fn derive_max_voter_weight_record(realm: &Pubkey, staking_program: &P
 }
 
 /// Derive the public key of a `jet_staking::state::StakeAccount` program account.
-pub(crate) fn derive_stake_account(
+pub fn derive_stake_account(
     stake_pool: &Pubkey,
     owner: &Pubkey,
     staking_program: &Pubkey,
@@ -41,7 +41,7 @@ pub(crate) fn derive_stake_account(
 
 /// Derive all the necessary public keys for creating a new
 /// `jet_staking::state::StakePool` program account.
-pub(crate) fn derive_stake_pool(seed: &str, staking_program: &Pubkey) -> StakePoolAddresses {
+pub fn derive_stake_pool(seed: &str, staking_program: &Pubkey) -> StakePoolAddresses {
     StakePoolAddresses {
         pool: Pubkey::find_program_address(&[seed.as_ref()], staking_program).0,
         vault: Pubkey::find_program_address(
@@ -58,7 +58,7 @@ pub(crate) fn derive_stake_pool(seed: &str, staking_program: &Pubkey) -> StakePo
 }
 
 /// Derive the public key of a governance voter weight record program account.
-pub(crate) fn derive_voter_weight_record(stake_account: &Pubkey, stake_program: &Pubkey) -> Pubkey {
+pub fn derive_voter_weight_record(stake_account: &Pubkey, stake_program: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(
         &[
             jet_staking::seeds::VOTER_WEIGHT_RECORD,

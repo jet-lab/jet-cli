@@ -9,7 +9,7 @@ use super::config::Config;
 use super::terminal::{request_approval, Spinner};
 
 /// Checks whether the account for the argued public key exists.
-pub(crate) fn account_exists(program: &Program, public_key: &Pubkey) -> Result<bool> {
+pub fn account_exists(program: &Program, public_key: &Pubkey) -> Result<bool> {
     let client = program.rpc();
     let info = client.get_account_with_commitment(public_key, client.commitment())?;
     Ok(info.value.is_some())
@@ -17,7 +17,7 @@ pub(crate) fn account_exists(program: &Program, public_key: &Pubkey) -> Result<b
 
 /// Handle the instantiation of a program client and the
 /// designating signer keypair for the argued config and program ID.
-pub(crate) fn create_program_client(config: &Config) -> (Program, Rc<Keypair>) {
+pub fn create_program_client(config: &Config) -> (Program, Rc<Keypair>) {
     (
         Client::new_with_options(
             config.cluster.clone(),
@@ -32,11 +32,7 @@ pub(crate) fn create_program_client(config: &Config) -> (Program, Rc<Keypair>) {
 /// Wrap a sendable transaction expression to be
 /// sent, confirmed and log the signature hash based on the
 /// detected verbosity setting in the exposed configuration.
-pub(crate) fn send_with_approval(
-    config: &Config,
-    req: RequestBuilder,
-    ix_names: Vec<&str>,
-) -> Result<()> {
+pub fn send_with_approval(config: &Config, req: RequestBuilder, ix_names: Vec<&str>) -> Result<()> {
     request_approval(config, Some(ix_names))?;
 
     let sp = Spinner::new("Sending transaction");
@@ -52,11 +48,12 @@ pub(crate) fn send_with_approval(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::config::Config;
     use anchor_client::solana_sdk::signer::Signer;
     use anchor_client::solana_sdk::system_program;
     use anchor_client::Cluster;
+
+    use super::*;
+    use crate::config::Config;
 
     #[test]
     fn program_client_creates_instance() {
