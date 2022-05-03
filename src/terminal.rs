@@ -86,9 +86,10 @@ pub fn print_serialized<T: Debug + Serialize>(s: T, opts: &DisplayOptions) -> Re
 pub fn request_approval(config: &Config, ixs: Option<Vec<&str>>) -> Result<()> {
     if let Some(names) = ixs {
         println!("Instructions to be processed:");
-        for (i, ix) in names.iter().enumerate() {
-            println!("[{}] {}", i, *ix);
-        }
+        names
+            .iter()
+            .enumerate()
+            .for_each(|(i, ix)| println!("[{}] {}", i + 1, *ix));
         println!();
     }
 
@@ -101,9 +102,9 @@ pub fn request_approval(config: &Config, ixs: Option<Vec<&str>>) -> Result<()> {
         .default(false)
         .interact()?;
 
-    if approved {
-        return Ok(());
+    if !approved {
+        return Err(anyhow!("Transaction aborted"));
     }
 
-    Err(anyhow!("Transaction aborted."))
+    Ok(())
 }

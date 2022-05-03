@@ -2,9 +2,12 @@ use anchor_client::solana_client::rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFi
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signer::Signer;
 use anchor_client::solana_sdk::system_program::ID as system_program;
-use anyhow::Result;
+use anchor_client::solana_sdk::sysvar::rent::ID as rent;
+use anchor_spl::token::{TokenAccount, ID as token_program};
+use anyhow::{anyhow, Result};
 use clap::Subcommand;
 use jet_margin::{accounts, instruction, MarginAccount};
+use jet_metadata::PositionTokenMetadata;
 
 use crate::config::{Config, Overrides};
 use crate::macros::{assert_exists, assert_not_exists};
@@ -58,6 +61,15 @@ pub enum MarginCommand {
         #[clap(short, long)]
         seed: u16,
     },
+    /// Register a new margin position.
+    Register {
+        /// Base-58 public key of the margin account.
+        #[clap(long)]
+        account: Pubkey,
+        /// Base-58 public key of the target position token mint.
+        #[clap(long)]
+        position_mint: Pubkey,
+    },
 }
 
 /// The main entry point and handler for all margin
@@ -82,6 +94,10 @@ pub fn entry(overrides: &Overrides, program_id: &Pubkey, subcmd: &MarginCommand)
         }
         MarginCommand::CreateAccount { seed } => process_create_account(&cfg, *seed),
         MarginCommand::Derive { owner, seed } => process_derive(&cfg, owner, *seed),
+        MarginCommand::Register {
+            account,
+            position_mint,
+        } => process_register(&cfg, account, position_mint),
     }
 }
 
@@ -198,5 +214,62 @@ fn process_derive(cfg: &Config, owner: &Option<Pubkey>, seed: u16) -> Result<()>
     let acc_owner = owner.unwrap_or(cfg.keypair.pubkey());
     let pk = derive_margin_account(&acc_owner, seed, &cfg.program_id);
     println!("{}", pk);
+    Ok(())
+}
+
+/// The function handler to allow users to register a new margin position on one of
+/// their accounts for an argued token mint throug the `jet_margin::RegisterPosition` instruction.
+fn process_register(cfg: &Config, margin_account: &Pubkey, position_mint: &Pubkey) -> Result<()> {
+    let (program, signer) = create_program_client(cfg);
+    let (metadata_program, _) = create_program_client(&cfg.clone_with_program(jet_metadata::ID)); // TODO: make configurable override (?)
+
+    let token_account = Pubkey::find_program_address(
+        &[margin_account.as_ref(), position_mint.as_ref()],
+        &token_program,
+    )
+    .0;
+
+    assert_not_exists!(&program, TokenAccount, &token_account);
+
+    let meta_accounts: Vec<Pubkey> = metadata_program
+        .accounts::<PositionTokenMetadata>(vec![
+            RpcFilterType::DataSize(8 + std::mem::size_of::<PositionTokenMetadata>() as u64),
+            RpcFilterType::Memcmp(Memcmp {
+                offset: 8,
+                bytes: MemcmpEncodedBytes::Bytes(position_mint.to_bytes().to_vec()),
+                encoding: None,
+            }),
+        ])?
+        .iter()
+        .map(|acc| acc.0)
+        .collect();
+
+    if meta_accounts.len() == 0 {
+        return Err(anyhow!(
+            "no `jet_metadata::PositionTokenMetadata` account for token mint {} was found",
+            position_mint,
+        ));
+    }
+
+    send_with_approval(
+        cfg,
+        program
+            .request()
+            .accounts(accounts::RegisterPosition {
+                authority: signer.pubkey(),
+                payer: signer.pubkey(),
+                margin_account: *margin_account,
+                position_token_mint: *position_mint,
+                metadata: meta_accounts[0],
+                token_account,
+                token_program,
+                system_program,
+                rent,
+            })
+            .args(instruction::RegisterPosition {})
+            .signer(signer.as_ref()),
+        vec!["jet_margin::RegisterPosition"],
+    )?;
+
     Ok(())
 }

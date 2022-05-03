@@ -4,12 +4,12 @@ use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Signer;
 use anchor_client::solana_sdk::system_program::ID as system_program;
 use anchor_client::solana_sdk::sysvar::rent::ID as rent;
+use anchor_spl::associated_token::get_associated_token_address;
 use anchor_spl::token::ID as token_program;
 use anyhow::Result;
 use clap::Subcommand;
 use jet_staking::state::{StakeAccount, StakePool};
 use jet_staking::{accounts, instruction, PoolConfig};
-use spl_associated_token_account::get_associated_token_address;
 
 use crate::config::{Config, Overrides};
 use crate::macros::*;
