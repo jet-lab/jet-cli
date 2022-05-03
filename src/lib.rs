@@ -10,7 +10,7 @@ mod pubkey;
 mod terminal;
 
 use cmd::*;
-use config::ConfigOverride;
+use config::Overrides;
 
 /// Jet Protocol command line interface for interacting
 /// with the various programs.
@@ -20,7 +20,7 @@ use config::ConfigOverride;
 #[clap(global_setting(AppSettings::DeriveDisplayOrder))]
 pub struct Opts {
     #[clap(flatten)]
-    cfg: ConfigOverride,
+    cfg: Overrides,
     #[clap(subcommand)]
     command: Command,
 }

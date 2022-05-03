@@ -11,7 +11,7 @@ use jet_staking::state::{StakeAccount, StakePool};
 use jet_staking::{accounts, instruction, PoolConfig};
 use spl_associated_token_account::get_associated_token_address;
 
-use crate::config::{Config, ConfigOverride};
+use crate::config::{Config, Overrides};
 use crate::macros::*;
 use crate::program::*;
 use crate::pubkey::*;
@@ -141,12 +141,8 @@ pub enum StakingCommand {
 
 /// The main entry point and handler for all staking
 /// program interaction commands.
-pub fn entry(
-    overrides: &ConfigOverride,
-    program_id: &Pubkey,
-    subcmd: &StakingCommand,
-) -> Result<()> {
-    let cfg = overrides.transform(*program_id)?;
+pub fn entry(overrides: &Overrides, program_id: &Pubkey, subcmd: &StakingCommand) -> Result<()> {
+    let cfg = Config::new(overrides, *program_id)?;
     match subcmd {
         StakingCommand::Account {
             address,

@@ -1,8 +1,10 @@
+use anchor_client::solana_sdk::commitment_config::CommitmentConfig;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Keypair;
 use anchor_client::Cluster;
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
+use solana_cli_config::Config as SolanaConfig;
 use std::fs::read_to_string;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -10,64 +12,37 @@ use std::rc::Rc;
 /// The struct definition of the available global command
 /// options that can be used to override or set standard behavior.
 #[derive(Debug, Parser)]
-pub struct ConfigOverride {
+pub struct Overrides {
     /// Auto-approve the signing and execution of the command transaction(s).
     #[clap(global = true, long)]
     auto_approve: bool,
+    #[clap(global = true, long)]
+    commitment: Option<CommitmentConfig>,
     /// Override of the path to the keypair to be used as signer.
     #[clap(
         global = true,
-        long = "keypair",
-        default_value = "~/.config/solana/id.json",
+        long,
         value_hint = ValueHint::FilePath,
     )]
-    keypair_path: String,
+    keypair: Option<String>,
     /// Override of the cluster to use.
-    #[clap(global = true, short = 'u', long, default_value_t = Cluster::Devnet)]
-    url: Cluster,
+    #[clap(global = true, short = 'u', long)]
+    url: Option<Cluster>,
     /// Enables logging verbosity for things like transaction signatures.
     #[clap(global = true, short = 'v', long)]
     verbose: bool,
 }
 
-impl ConfigOverride {
-    /// Converts the provided and default command line global options
-    /// into the standard configuration for the executed command.
-    pub fn transform(&self, program_id: Pubkey) -> Result<Config> {
-        let normalized_path = if self.keypair_path.starts_with('~') {
-            PathBuf::from(shellexpand::tilde(&self.keypair_path).to_string())
-        } else {
-            PathBuf::from(&self.keypair_path)
-        };
-
-        if !normalized_path.exists() {
-            return Err(anyhow!("Provided keypair path was invalid"));
-        }
-
-        let data = read_to_string(&normalized_path)?;
-        let bytes = serde_json::from_str::<Vec<u8>>(&data)?;
-        let keypair = Keypair::from_bytes(&bytes)?;
-
-        Ok(Config {
-            auto_approved: self.auto_approve,
-            cluster: self.url.clone(),
-            keypair: Rc::new(keypair),
-            keypair_path: normalized_path,
-            program_id,
-            verbose: self.verbose,
-        })
-    }
-}
-
-/// Default implementation for the `ConfigOverride` struct purposed for
+/// Default implementation for the `Overrides` struct purposed for
 /// quickly instantiating during the cargo test executions.
 #[cfg(test)]
-impl Default for ConfigOverride {
+impl Default for Overrides {
     fn default() -> Self {
         Self {
             auto_approve: false,
-            keypair_path: "~/.config/solana/id.json".into(),
-            url: Cluster::Devnet,
+            commitment: Some(CommitmentConfig::confirmed()),
+            keypair: Some("~/.config/solana/id.json".into()),
+            url: Some(Cluster::Devnet),
             verbose: false,
         }
     }
@@ -80,21 +55,54 @@ pub struct Config {
     pub auto_approved: bool,
     pub cluster: Cluster,
     pub keypair: Rc<Keypair>,
-    pub keypair_path: PathBuf,
     pub program_id: Pubkey,
     pub verbose: bool,
 }
 
 impl Config {
-    /// Create a new instance of `Config` from another with a different program ID.
-    pub fn from_with_program(other: &Config, program_id: Pubkey) -> Self {
-        Self {
-            auto_approved: other.auto_approved,
-            cluster: other.cluster.clone(),
-            keypair: other.keypair.clone(),
-            keypair_path: other.keypair_path.clone(),
+    /// Create a new `Config` instance that processes appropriate file-based configurations
+    /// and then applies any argument provided overrides discovered from the command.
+    pub fn new(overrides: &Overrides, program_id: Pubkey) -> Result<Self> {
+        let sol_cfg: SolanaConfig =
+            SolanaConfig::load(solana_cli_config::CONFIG_FILE.as_ref().unwrap())?;
+
+        let n_keypair = normalize_path_arg(
+            "--keypair",
+            overrides.keypair.as_ref().unwrap_or(&sol_cfg.keypair_path),
+        )?;
+
+        let keypair = {
+            let data = read_to_string(&n_keypair)?;
+            let bytes: Vec<u8> = serde_json::from_str(&data)?;
+            Keypair::from_bytes(&bytes)
+        }?;
+
+        let cluster = overrides
+            .url
+            .as_ref()
+            .unwrap_or(&Cluster::Custom(
+                sol_cfg.json_rpc_url,
+                sol_cfg.websocket_url,
+            ))
+            .to_owned();
+
+        Ok(Self {
+            auto_approved: overrides.auto_approve,
+            cluster,
+            keypair: Rc::new(keypair),
             program_id,
-            verbose: other.verbose,
+            verbose: overrides.verbose,
+        })
+    }
+
+    /// Create a new instance of `Config` from another with a different program ID.
+    pub fn clone_with_program(&self, program_id: Pubkey) -> Self {
+        Self {
+            auto_approved: self.auto_approved,
+            cluster: self.cluster.clone(),
+            keypair: self.keypair.clone(),
+            program_id,
+            verbose: self.verbose,
         }
     }
 }
@@ -108,58 +116,41 @@ impl Default for Config {
             auto_approved: bool::default(),
             cluster: Cluster::default(),
             keypair: Rc::new(Keypair::new()),
-            keypair_path: PathBuf::default(),
             program_id: Pubkey::default(),
             verbose: bool::default(),
         }
     }
 }
 
+/// Normalizes the argued filepath based string into a fully-qualified system path.
+fn normalize_path_arg(name: &str, val: &str) -> Result<PathBuf> {
+    let normalized = if val.starts_with('~') {
+        PathBuf::from(shellexpand::tilde(&val).to_string())
+    } else {
+        PathBuf::from(&val)
+    };
+
+    if !normalized.exists() {
+        return Err(anyhow!("provided file path for `{}` was invalid", name));
+    }
+
+    Ok(normalized)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::Cluster;
-    use super::ConfigOverride;
+    use super::{Cluster, Config, Overrides};
     use anchor_client::solana_sdk::pubkey::Pubkey;
 
     #[test]
-    fn cfg_transforms_tilde() {
-        let cfg = ConfigOverride {
-            auto_approve: false,
-            keypair_path: "~/.config/solana/id.json".into(),
-            url: Cluster::Devnet,
-            verbose: false,
-        }
-        .transform(Pubkey::default())
-        .unwrap();
-
-        assert!(!cfg.keypair_path.starts_with("~"));
-    }
-
-    #[test]
     fn cfg_persists_cluster() {
-        let cfg = ConfigOverride {
-            auto_approve: false,
-            keypair_path: "~/.config/solana/id.json".into(),
-            url: Cluster::Mainnet,
-            verbose: false,
-        }
-        .transform(Pubkey::default())
-        .unwrap();
-
-        assert_eq!(cfg.cluster, Cluster::Mainnet);
+        let cfg = Config::new(&Overrides::default(), Pubkey::default()).unwrap();
+        assert_eq!(cfg.cluster, Cluster::Devnet);
     }
 
     #[test]
     fn cfg_read_keypair_bytes() {
-        let cfg = ConfigOverride {
-            auto_approve: false,
-            keypair_path: "~/.config/solana/id.json".into(),
-            url: Cluster::Devnet,
-            verbose: false,
-        }
-        .transform(Pubkey::default())
-        .unwrap();
-
+        let cfg = Config::new(&Overrides::default(), Pubkey::default()).unwrap();
         assert!(cfg.keypair.to_base58_string().len() >= 32);
     }
 }

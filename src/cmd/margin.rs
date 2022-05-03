@@ -6,7 +6,7 @@ use anyhow::Result;
 use clap::Subcommand;
 use jet_margin::{accounts, instruction, MarginAccount};
 
-use crate::config::{Config, ConfigOverride};
+use crate::config::{Config, Overrides};
 use crate::macros::{assert_exists, assert_not_exists};
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::derive_margin_account;
@@ -15,7 +15,7 @@ use crate::terminal::{print_serialized, DisplayOptions};
 /// Margin program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
 pub enum MarginCommand {
-    /// Get the account data for a user's margin account.
+    /// Get the account data for a user's margin account or all they own.
     Account {
         /// Base-58 public key of the margin account.
         address: Option<Pubkey>,
@@ -62,12 +62,8 @@ pub enum MarginCommand {
 
 /// The main entry point and handler for all margin
 /// program interaction commands.
-pub fn entry(
-    overrides: &ConfigOverride,
-    program_id: &Pubkey,
-    subcmd: &MarginCommand,
-) -> Result<()> {
-    let cfg = overrides.transform(*program_id)?;
+pub fn entry(overrides: &Overrides, program_id: &Pubkey, subcmd: &MarginCommand) -> Result<()> {
+    let cfg = Config::new(overrides, *program_id)?;
     match subcmd {
         MarginCommand::Account {
             address,

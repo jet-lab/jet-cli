@@ -9,7 +9,7 @@ use jet_rewards::{accounts, instruction};
 use jet_staking::state::StakePool;
 
 use super::staking::DEFAULT_STAKE_POOL;
-use crate::config::{Config, ConfigOverride};
+use crate::config::{Config, Overrides};
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::{derive_stake_account, derive_voter_weight_record};
 use crate::terminal::{print_serialized, DisplayOptions};
@@ -49,12 +49,8 @@ pub enum AirdropCommand {
 
 /// The main entry point and handler for all rewards
 /// program interaction commands.
-pub fn entry(
-    overrides: &ConfigOverride,
-    program_id: &Pubkey,
-    subcmd: &AirdropCommand,
-) -> Result<()> {
-    let cfg = overrides.transform(*program_id)?;
+pub fn entry(overrides: &Overrides, program_id: &Pubkey, subcmd: &AirdropCommand) -> Result<()> {
+    let cfg = Config::new(overrides, *program_id)?;
     match subcmd {
         AirdropCommand::Account {
             address,
@@ -82,8 +78,7 @@ fn process_get_account(cfg: &Config, address: &Pubkey, display: DisplayOptions) 
 fn process_claim(cfg: &Config, airdrop: &Pubkey) -> Result<()> {
     // Instantiate program clients for both jet_rewards and jet_staking programs
     let (rewards_program, signer) = create_program_client(cfg);
-    let (staking_program, _) =
-        create_program_client(&Config::from_with_program(cfg, jet_staking::ID)); // TODO: make configurable override (?)
+    let (staking_program, _) = create_program_client(&cfg.clone_with_program(jet_staking::ID)); // TODO: make configurable override (?)
 
     // Fetch the required program account data to retrieve PDAs required for instructions
     let Airdrop {
