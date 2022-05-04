@@ -17,7 +17,7 @@ pub struct Overrides {
     #[clap(global = true, long)]
     auto_approve: bool,
     /// Override of the commitment level used for the RPC client.
-    #[clap(global = true, long)]
+    #[clap(global = true, long, possible_values = ["confirmed", "finalized", "processed"])]
     commitment: Option<CommitmentConfig>,
     /// Override of the path to the keypair to be used as signer.
     #[clap(
@@ -26,7 +26,7 @@ pub struct Overrides {
         value_hint = ValueHint::FilePath,
     )]
     keypair: Option<String>,
-    /// Override of the cluster to use.
+    /// Override of the cluster or RPC URL to use (or their first letter): ["mainnet-beta", "devnet", "testnet", "localnet"].
     #[clap(global = true, short = 'u', long)]
     url: Option<Cluster>,
     /// Enables logging verbosity for things like transaction signatures.

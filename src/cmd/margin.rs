@@ -46,6 +46,18 @@ pub enum MarginCommand {
         #[clap(short, long)]
         seed: u16,
     },
+    /// Close a position owned by a margin account.
+    ClosePosition {
+        /// Base-58 public key of the margin account.
+        #[clap(long)]
+        account: Pubkey,
+        /// Base-58 public key of the target position token mint.
+        #[clap(long)]
+        position_mint: Pubkey,
+        /// The public key to receive the rent.
+        #[clap(long)]
+        receiver: Option<Pubkey>,
+    },
     /// Create a new margin account.
     CreateAccount {
         /// The numerical seed for the new account.
@@ -92,6 +104,11 @@ pub fn entry(overrides: &Overrides, program_id: &Pubkey, subcmd: &MarginCommand)
         MarginCommand::CloseAccount { receiver, seed } => {
             process_close_account(&cfg, receiver, *seed)
         }
+        MarginCommand::ClosePosition {
+            account,
+            position_mint,
+            receiver,
+        } => process_close_position(&cfg, account, position_mint, receiver),
         MarginCommand::CreateAccount { seed } => process_create_account(&cfg, *seed),
         MarginCommand::Derive { owner, seed } => process_derive(&cfg, owner, *seed),
         MarginCommand::Register {
@@ -153,7 +170,7 @@ fn process_check_health(cfg: &Config, address: &Pubkey) -> Result<()> {
     Ok(())
 }
 
-/// The function handler to allow user's to close their margin account and receive back rent.
+/// The function handler to allow users to close their margin account and receive back rent.
 fn process_close_account(cfg: &Config, receiver: &Option<Pubkey>, seed: u16) -> Result<()> {
     let (program, signer) = create_program_client(cfg);
     let rent_receiver = receiver.unwrap_or(signer.pubkey());
@@ -175,6 +192,44 @@ fn process_close_account(cfg: &Config, receiver: &Option<Pubkey>, seed: u16) -> 
             .args(instruction::CloseAccount {})
             .signer(signer.as_ref()),
         vec!["jet_margin::CloseAccount"],
+    )?;
+
+    Ok(())
+}
+
+/// The function handler to allow users to close a position on their margin account.
+fn process_close_position(
+    cfg: &Config,
+    margin_account: &Pubkey,
+    position_mint: &Pubkey,
+    receiver: &Option<Pubkey>,
+) -> Result<()> {
+    let (program, signer) = create_program_client(cfg);
+    let rent_receiver = receiver.unwrap_or(signer.pubkey());
+
+    let token_account = Pubkey::find_program_address(
+        &[margin_account.as_ref(), position_mint.as_ref()],
+        &token_program,
+    )
+    .0;
+
+    assert_exists!(&program, TokenAccount, &token_account);
+
+    send_with_approval(
+        cfg,
+        program
+            .request()
+            .accounts(accounts::ClosePosition {
+                authority: signer.pubkey(),
+                receiver: rent_receiver,
+                margin_account: *margin_account,
+                position_token_mint: *position_mint,
+                token_account,
+                token_program,
+            })
+            .args(instruction::ClosePosition {})
+            .signer(signer.as_ref()),
+        vec!["jet_margin::ClosePosition"],
     )?;
 
     Ok(())
