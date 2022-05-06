@@ -8,12 +8,19 @@ use anyhow::{anyhow, Result};
 use clap::Subcommand;
 use jet_margin::{accounts, instruction, MarginAccount};
 use jet_metadata::PositionTokenMetadata;
+use serde::Serialize;
 
 use crate::config::{Config, Overrides};
 use crate::macros::{assert_exists, assert_not_exists};
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::derive_margin_account;
 use crate::terminal::{print_serialized, DisplayOptions};
+
+#[derive(Debug, Serialize)]
+struct AccountHealth {
+    healthy: bool,
+    liquidating: bool,
+}
 
 /// Margin program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -36,6 +43,12 @@ pub enum MarginCommand {
     Check {
         /// Base-58 public key of the margin account.
         address: Pubkey,
+        /// Output data as serialized JSON.
+        #[clap(long)]
+        json: bool,
+        /// Formatted data output.
+        #[clap(long)]
+        pretty: bool,
     },
     /// Close your margin account.
     CloseAccount {
@@ -100,7 +113,11 @@ pub fn entry(overrides: &Overrides, program_id: &Pubkey, subcmd: &MarginCommand)
             owner,
             DisplayOptions::from_args(*json, *pretty),
         ),
-        MarginCommand::Check { address } => process_check_health(&cfg, address),
+        MarginCommand::Check {
+            address,
+            json,
+            pretty,
+        } => process_check_health(&cfg, address, DisplayOptions::from_args(*json, *pretty)),
         MarginCommand::CloseAccount { receiver, seed } => {
             process_close_account(&cfg, receiver, *seed)
         }
@@ -151,23 +168,20 @@ fn process_get_account(
 
 /// The function handler to verify the health of the positions in a margin
 /// account via the `jet_margin::VerifyHealthy` transaction.
-fn process_check_health(cfg: &Config, address: &Pubkey) -> Result<()> {
+fn process_check_health(cfg: &Config, address: &Pubkey, display: DisplayOptions) -> Result<()> {
     let (program, _) = create_program_client(cfg);
 
-    send_with_approval(
-        cfg,
-        program
-            .request()
-            .accounts(accounts::VerifyHealthy {
-                margin_account: *address,
-            })
-            .args(instruction::VerifyHealthy {}),
-        vec!["jet_margin::VerifyHealthy"],
-    )?;
+    let acc = program.account::<MarginAccount>(*address)?;
+    let healthy = acc.verify_healthy_positions().is_ok();
+    let liquidating = acc.verify_not_liquidating().is_err();
 
-    println!("Healthy!");
-
-    Ok(())
+    print_serialized(
+        AccountHealth {
+            healthy,
+            liquidating,
+        },
+        &display,
+    )
 }
 
 /// The function handler to allow users to close their margin account and receive back rent.
@@ -327,4 +341,34 @@ fn process_register(cfg: &Config, margin_account: &Pubkey, position_mint: &Pubke
     )?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_test::{assert_ser_tokens, Token};
+
+    use super::*;
+
+    #[test]
+    fn account_health_serialization() {
+        let ah = AccountHealth {
+            healthy: true,
+            liquidating: false,
+        };
+
+        assert_ser_tokens(
+            &ah,
+            &[
+                Token::Struct {
+                    name: "AccountHealth",
+                    len: 2,
+                },
+                Token::Str("healthy"),
+                Token::Bool(true),
+                Token::Str("liquidating"),
+                Token::Bool(false),
+                Token::StructEnd,
+            ],
+        );
+    }
 }
