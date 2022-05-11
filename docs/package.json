@@ -1,9 +1,0 @@
-{
-  "private": true,
-  "scripts": {
-    "start": "docsify serve ."
-  },
-  "devDependencies": {
-    "docsify-cli": "^4.4.4"
-  }
-}
