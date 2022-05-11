@@ -1,7 +1,18 @@
-# Jet CLI
+<div align="center">
+  <h1>Jet CLI</div>
 
-[![Test](https://img.shields.io/github/workflow/status/jet-lab/jet-cli/Test?label=Test&logo=github)](https://github.com/jet-lab/jet-cli/tree/master/Cargo.toml)
-[![Version](https://img.shields.io/github/v/release/jet-lab/jet-cli?color=orange&label=jet-cli)](https://github.com/jet-lab/jet-cli/tree/master/Cargo.toml)
+  <p align="center">
+    <a target="_blank" href="https://github.com/jet-lab/jet-cli/actions/workflows/test.yaml"><img alt="Test" src="https://img.shields.io/github/workflow/status/jet-lab/jet-cli/Test?label=Test&logo=github"></a>
+    <a target="_blank" href="https://github.com/jet-lab/jet-cli/tree/master/Cargo.toml"><img alt="Version" src="https://img.shields.io/github/v/release/jet-lab/jet-cli?color=orange&label=jet-cli" /></a>
+  </p>
+
+  <p align="center">
+    <em>
+      The Jet Protocol CLI is geared towards users of all types who wish to interact with our range of Solana programs through a traditional terminal interface. The goal is to provide equivalently high-leveled abstraction from the on-chain programs as a traditional web-application interface would for the user-base that wishes to interact through their command line or via for use in automated or scripting environments.
+    </em>
+  </p>
+</div>
+
 
 ## Installation
 

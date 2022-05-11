@@ -1,5 +1,7 @@
 .DS_Store
 authority.json
 user.json
+
+node_modules/
 target/
 test-ledger/

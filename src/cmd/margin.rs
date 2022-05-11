@@ -16,6 +16,8 @@ use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::derive_margin_account;
 use crate::terminal::{print_serialized, DisplayOptions};
 
+/// Utility struct for serialization of the health of
+/// a user's margin account for display purposes.
 #[derive(Debug, Serialize)]
 struct AccountHealth {
     healthy: bool,

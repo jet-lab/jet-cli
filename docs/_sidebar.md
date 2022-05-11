@@ -1,0 +1,6 @@
+* [Overview](/)
+* [Commands](commands/)
+  * [Airdrop](commands/airdrop.md)
+  * [Auth](commands/auth.md)
+  * [Margin](commands/margin.md)
+  * [Staking](commands/staking.md)
