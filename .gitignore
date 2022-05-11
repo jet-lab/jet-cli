@@ -2,6 +2,7 @@
 authority.json
 user.json
 
+docs/package*
 node_modules/
 target/
 test-ledger/
