@@ -23,6 +23,7 @@ clap = { version = "3.1", features = ["derive"] }
 dialoguer = "0.10"
 indicatif = "0.16"
 jet-proto-auth = { git = "https://github.com/jet-lab/jet-governance", branch = "master", features = ["cli"] }
+jet-bonds = { path = "./bonded-osprey/programs/bonds", features = ["cli"] }
 jet-proto-margin = { path = "./jet-margin/programs/margin", features = ["cli"] }
 jet-proto-metadata = { path = "./jet-margin/programs/metadata", features = ["no-entrypoint"] }
 jet-proto-rewards = { git = "https://github.com/jet-lab/jet-governance", branch = "master", features = ["cli"] }

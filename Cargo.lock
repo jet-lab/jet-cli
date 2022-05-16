@@ -28,6 +28,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
+name = "agnostic-orderbook"
+version = "0.1.0"
+source = "git+https://github.com/Bonfida/agnostic-orderbook.git?branch=main#65d4cb06158edf15100a8de21446b42e3876d225"
+dependencies = [
+ "bonfida-utils",
+ "borsh",
+ "bytemuck",
+ "enumflags2",
+ "num-derive",
+ "num-traits",
+ "num_enum",
+ "solana-program",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
 name = "ahash"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -63,7 +80,7 @@ dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
  "regex",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -77,7 +94,7 @@ dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
  "rustversion",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -87,7 +104,7 @@ source = "git+https://github.com/jet-lab/anchor?branch=master#7803acb99574d15dcf
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.38",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -98,7 +115,7 @@ dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -110,7 +127,7 @@ dependencies = [
  "anyhow",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -123,7 +140,7 @@ dependencies = [
  "heck 0.3.3",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -135,7 +152,7 @@ dependencies = [
  "anyhow",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -147,7 +164,7 @@ dependencies = [
  "anyhow",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -175,7 +192,7 @@ dependencies = [
  "anyhow",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -226,7 +243,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "syn 1.0.92",
+ "syn 1.0.94",
  "thiserror",
 ]
 
@@ -368,6 +385,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
+name = "bonds-metadata"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
+name = "bonfida-macros"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5560c4eb64bcc9c0eb4ad3975155c30cb353a898299dcc47c5400bf7e21c60ff"
+dependencies = [
+ "proc-macro2 1.0.38",
+ "quote 1.0.18",
+ "solana-program",
+ "syn 1.0.94",
+]
+
+[[package]]
+name = "bonfida-utils"
+version = "0.2.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0de55392939054ec60454e98ad8befaadd58aea49027021c2f88ca5dd168695e"
+dependencies = [
+ "bonfida-macros",
+ "borsh",
+ "pyth-sdk-solana",
+ "solana-program",
+]
+
+[[package]]
 name = "borsh"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -387,7 +435,7 @@ dependencies = [
  "borsh-schema-derive-internal",
  "proc-macro-crate 0.1.5",
  "proc-macro2 1.0.38",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -398,7 +446,7 @@ checksum = "5449c28a7b352f2d1e592a8a28bf139bc71afb0764a14f3c02500935d8c44065"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -409,7 +457,7 @@ checksum = "cdbd5696d8bfa21d53d9fe39a714a18538bad11492a42d066dbbc395fb1951c0"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -457,7 +505,7 @@ checksum = "562e382481975bc61d11275ac5e62a19abd00b0547d99516a415336f183dcd0e"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -550,9 +598,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.17"
+version = "3.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47582c09be7c8b32c0ab3a6181825ababb713fde6fff20fc573a3870dd45c6a0"
+checksum = "d2dbdf4bdacb33466e854ce889eee8dfd5729abf7ccd7664d0a2d60cd384440b"
 dependencies = [
  "atty",
  "bitflags",
@@ -567,15 +615,15 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.1.7"
+version = "3.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3aab4734e083b809aaf5794e14e756d1c798d2c69c7f7de7a09a2f5214993c1"
+checksum = "25320346e922cffe59c0bbc5410c8d8784509efb321488971081313cb1e1a33c"
 dependencies = [
  "heck 0.4.0",
  "proc-macro-error",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -784,9 +832,9 @@ dependencies = [
 
 [[package]]
 name = "dialoguer"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "349d6b4fabcd9e97e1df1ae15395ac7e49fb144946a0d453959dc2696273b9da"
+checksum = "d8c8ae48e400addc32a8710c8d62d55cb84249a7d58ac4cd959daecfbaddc545"
 dependencies = [
  "console",
  "tempfile",
@@ -867,10 +915,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "ed25519"
-version = "1.4.1"
+name = "dyn-clone"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d5c4b5e5959dc2c2b89918d8e2cc40fcdd623cef026ed09d2f0ee05199dc8e4"
+checksum = "21e50f3adc76d6a43f5ed73b698a87d0760ca74617f60f7c3b879003536fdd28"
+
+[[package]]
+name = "ed25519"
+version = "1.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e9c280362032ea4203659fc489832d0204ef09f247a0506f170dafcac08c369"
 dependencies = [
  "signature",
 ]
@@ -921,6 +975,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9852635589dc9f9ea1b6fe9f05b50ef208c85c834a562f0c6abb1c475736ec2b"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "enumflags2"
+version = "0.7.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e75d4cd21b95383444831539909fbb14b9dc3fdceb2a6f5d36577329a1f55ccb"
+dependencies = [
+ "enumflags2_derive",
+]
+
+[[package]]
+name = "enumflags2_derive"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f58dc3c5e468259f19f2d46304a6b28f1c3d034442e14b322d2b850e36f6d5ae"
+dependencies = [
+ "proc-macro2 1.0.38",
+ "quote 1.0.18",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -975,7 +1049,7 @@ checksum = "aa4da3c766cd7a0db8242e326e9e4e081edd567072893ed320008189715366a4"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
  "synstructure",
 ]
 
@@ -1096,7 +1170,7 @@ checksum = "33c1e13800337f4d4d7a316bf45a567dbcb6ffe087f16424852d97e97a91f512"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -1230,6 +1304,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -1426,9 +1509,24 @@ dependencies = [
 
 [[package]]
 name = "itoa"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
+checksum = "112c678d4050afce233f4f2852bb2eb519230b3cf12f33585275537d7e41578d"
+
+[[package]]
+name = "jet-bonds"
+version = "0.1.0"
+dependencies = [
+ "agnostic-orderbook",
+ "anchor-lang",
+ "anchor-spl",
+ "bitflags",
+ "bonds-metadata",
+ "bytemuck",
+ "num-derive",
+ "num-traits",
+ "serde",
+]
 
 [[package]]
 name = "jet-cli"
@@ -1437,9 +1535,10 @@ dependencies = [
  "anchor-client",
  "anchor-spl",
  "anyhow",
- "clap 3.1.17",
- "dialoguer 0.10.0",
+ "clap 3.1.18",
+ "dialoguer 0.10.1",
  "indicatif",
+ "jet-bonds",
  "jet-proto-auth",
  "jet-proto-margin",
  "jet-proto-metadata",
@@ -1455,7 +1554,7 @@ dependencies = [
 [[package]]
 name = "jet-proto-auth"
 version = "1.0.0"
-source = "git+https://github.com/jet-lab/jet-governance?branch=master#b566ce3c27a54a3c1710e5a91383a79065c02885"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#b1a714064a45c8a256fa501a1640e86d841a6a87"
 dependencies = [
  "anchor-lang",
  "serde",
@@ -1478,8 +1577,8 @@ dependencies = [
 
 [[package]]
 name = "jet-proto-math"
-version = "1.0.3"
-source = "git+https://github.com/jet-lab/program-libraries?branch=main#25691bffb5efe68ce8d6e65a098924f0e1d129b6"
+version = "1.0.4"
+source = "git+https://github.com/jet-lab/program-libraries?branch=main#1e8bad0e3d960ed04ff6e5975844cf7b43cb9c22"
 dependencies = [
  "bytemuck",
  "static_assertions",
@@ -1504,13 +1603,13 @@ dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
  "static_assertions",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
 name = "jet-proto-rewards"
 version = "1.0.0"
-source = "git+https://github.com/jet-lab/jet-governance?branch=master#b566ce3c27a54a3c1710e5a91383a79065c02885"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#b1a714064a45c8a256fa501a1640e86d841a6a87"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -1525,7 +1624,7 @@ dependencies = [
 [[package]]
 name = "jet-proto-staking"
 version = "1.0.0"
-source = "git+https://github.com/jet-lab/jet-governance?branch=master#b566ce3c27a54a3c1710e5a91383a79065c02885"
+source = "git+https://github.com/jet-lab/jet-governance?branch=master#b1a714064a45c8a256fa501a1640e86d841a6a87"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -1718,15 +1817,14 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.8.2"
+version = "0.7.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52da4364ffb0e4fe33a9841a98a3f3014fb964045ce4f7a45a398243c8d6b0c9"
+checksum = "8067b404fe97c70829f082dec8bcf4f71225d7eaea1d8645349cb76fa06205cc"
 dependencies = [
  "libc",
  "log",
  "miow",
  "ntapi",
- "wasi 0.11.0+wasi-snapshot-preview1",
  "winapi",
 ]
 
@@ -1769,7 +1867,7 @@ checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -1819,7 +1917,7 @@ dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -1830,9 +1928,9 @@ checksum = "830b246a0e5f20af87141b25c173cd1b609bd7779a4617d6ec582abaf90870f3"
 
 [[package]]
 name = "object"
-version = "0.28.3"
+version = "0.28.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40bec70ba014595f99f7aa110b84331ffe1ee9aece7fe6f387cc7e3ecda4d456"
+checksum = "e42c982f2d955fac81dd7e1d0e1426a7d702acd9c98d19ab01083a6a0328c424"
 dependencies = [
  "memchr",
 ]
@@ -1851,9 +1949,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "os_str_bytes"
-version = "6.0.0"
+version = "6.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
+checksum = "029d8d0b2f198229de29dca79676f2738ff952edf3fde542eb8bf94d8c21b435"
 
 [[package]]
 name = "ouroboros"
@@ -1876,7 +1974,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -1887,17 +1985,7 @@ checksum = "7d17b78036a60663b797adeaee46f5c9dfebb86948d1255007a1d6be0271ff99"
 dependencies = [
  "instant",
  "lock_api",
- "parking_lot_core 0.8.5",
-]
-
-[[package]]
-name = "parking_lot"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87f5ec2493a61ac0506c0f4199f99070cbe83857b0337006a30f3e6719b8ef58"
-dependencies = [
- "lock_api",
- "parking_lot_core 0.9.3",
+ "parking_lot_core",
 ]
 
 [[package]]
@@ -1912,19 +2000,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "winapi",
-]
-
-[[package]]
-name = "parking_lot_core"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09a279cbf25cb0757810394fbc1e359949b59e348145c643a939a525692e6929"
-dependencies = [
- "cfg-if",
- "libc",
- "redox_syscall",
- "smallvec",
- "windows-sys",
 ]
 
 [[package]]
@@ -2003,7 +2078,7 @@ dependencies = [
  "proc-macro-error-attr",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
  "version_check",
 ]
 
@@ -2044,7 +2119,7 @@ checksum = "4bf29726d67464d49fa6224a1d07936a8c08bb3fba727c7493f6cf1616fdaada"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
  "version_check",
  "yansi",
 ]
@@ -2060,6 +2135,36 @@ dependencies = [
  "bytemuck",
  "num-derive",
  "num-traits",
+ "serde",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
+name = "pyth-sdk"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f262b88557d8f152a247e1be786a8359d63112fac0a6e49fa41082a8ef789e8d"
+dependencies = [
+ "borsh",
+ "borsh-derive",
+ "hex",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "pyth-sdk-solana"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb250e58d1106e47b4348af87f738b8381d6c98c33f4ad13401ab9d82300daa9"
+dependencies = [
+ "borsh",
+ "borsh-derive",
+ "bytemuck",
+ "num-derive",
+ "num-traits",
+ "pyth-sdk",
  "serde",
  "solana-program",
  "thiserror",
@@ -2165,9 +2270,9 @@ dependencies = [
 
 [[package]]
 name = "rayon"
-version = "1.5.2"
+version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd249e82c21598a9a426a4e00dd7adc1d640b22445ec8545feef801d1a74c221"
+checksum = "bd99e5772ead8baa5215278c9b15bf92087709e9c1b2d1f97cdb5a183c933a7d"
 dependencies = [
  "autocfg",
  "crossbeam-deque",
@@ -2177,9 +2282,9 @@ dependencies = [
 
 [[package]]
 name = "rayon-core"
-version = "1.9.2"
+version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f51245e1e62e1f1629cbfec37b5793bbabcaeb90f30e94d2ba03564687353e4"
+checksum = "258bcdb5ac6dad48491bb2992db6b7cf74878b0384908af124823d118c99683f"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-deque",
@@ -2325,9 +2430,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.20.4"
+version = "0.20.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fbfeb8d0ddb84706bc597a5574ab8912817c52a397f819e5b614e2265206921"
+checksum = "a024a432ae760ab3bff924ad91ce1cfa52cb57ed16e1ef32d0d249cfee1a6c13"
 dependencies = [
  "log",
  "ring",
@@ -2352,9 +2457,9 @@ checksum = "f2cc38e8fa666e2de3c4aba7edeb5ffc5246c1c2ed0e3d17e560aeeba736b23f"
 
 [[package]]
 name = "ryu"
-version = "1.0.9"
+version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73b4b750c782965c211b42f022f59af1fbceabdd026623714f104152f1ec149f"
+checksum = "f3f6f92acf49d1b98f7a81226834412ada05458b7364277387724a237f062695"
 
 [[package]]
 name = "same-file"
@@ -2363,6 +2468,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "schemars"
+version = "0.8.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6b5a3c80cea1ab61f4260238409510e814e38b4b563c06044edf91e7dc070e3"
+dependencies = [
+ "dyn-clone",
+ "schemars_derive",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemars_derive"
+version = "0.8.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41ae4dce13e8614c46ac3c38ef1c0d668b101df6ac39817aebdaa26642ddae9b"
+dependencies = [
+ "proc-macro2 1.0.38",
+ "quote 1.0.18",
+ "serde_derive_internals",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -2413,7 +2542,18 @@ checksum = "1f26faba0c3959972377d3b2d306ee9f71faee9714294e41bb777f83f88578be"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
+]
+
+[[package]]
+name = "serde_derive_internals"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1dbab34ca63057a1f15280bdf3c39f2b1eb1b54c17e98360e511637aef7418c6"
+dependencies = [
+ "proc-macro2 1.0.38",
+ "quote 1.0.18",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -2546,9 +2686,9 @@ dependencies = [
 
 [[package]]
 name = "solana-account-decoder"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ea8c1862fc46c6ab40d83d15ced24a7afb1f3422da5824f1e9260f5ac10141f"
+checksum = "0a6c4df52d6cb75913d0008a3dff256c4ac78a5bbf385d9a17347900d99eca91"
 dependencies = [
  "Inflector",
  "base64 0.12.3",
@@ -2569,9 +2709,9 @@ dependencies = [
 
 [[package]]
 name = "solana-address-lookup-table-program"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c60728aec35d772e6614319558cdccbe3f845102699b65ba5ac7497da0b626a"
+checksum = "d32c243f19e6ea95cfc09805b7f815368a73f93d12e896f154477e224b9ce064"
 dependencies = [
  "bincode",
  "bytemuck",
@@ -2589,9 +2729,9 @@ dependencies = [
 
 [[package]]
 name = "solana-bloom"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ddcd7c6adb802bc812a5a80c8de06ba0f0e8df0cca296a8b4e67cd04c16218f"
+checksum = "681ba25c959e24a9fa45a1c41b759ae73c5fa78017efde560d00b58e0674b446"
 dependencies = [
  "bv",
  "fnv",
@@ -2608,9 +2748,9 @@ dependencies = [
 
 [[package]]
 name = "solana-bucket-map"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72b3435b145894971a58a08a7b6be997ec782239fdecd5edd9846cd1d6aa5986"
+checksum = "cc592ceeaf717673a4c83398cf6684be5fe66825552a1bf99b2a1114620059ef"
 dependencies = [
  "fs_extra",
  "log",
@@ -2625,9 +2765,9 @@ dependencies = [
 
 [[package]]
 name = "solana-clap-utils"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8417a89c377728dbfbf1966b6493544f6e5e168ebc5bb444f3526481fae94e31"
+checksum = "9e561133d7819443e6ff8d81f0c8e2f80c6c10ce3c937c1dcf518e81d8397fb7"
 dependencies = [
  "chrono",
  "clap 2.34.0",
@@ -2643,9 +2783,9 @@ dependencies = [
 
 [[package]]
 name = "solana-cli-config"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e8b011d36369ef2bc3dff63fee078bf2916a4fd21f3aa702ee731c7ddf83d28"
+checksum = "ca226b9f2e650db95e78f07fa12c9964058f00f2a1fcb3dcbf8880d48703df14"
 dependencies = [
  "dirs-next",
  "lazy_static",
@@ -2657,9 +2797,9 @@ dependencies = [
 
 [[package]]
 name = "solana-client"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e20f4df8cee4a1819f1c5b0d3d85d50c30f27133b2ae68c2fd92655e4aede34a"
+checksum = "b81f869d49a6fb89758411d79c1f73e6543dfd3caabce5a6ebe8f5070f7b2a3e"
 dependencies = [
  "base64 0.13.0",
  "bincode",
@@ -2691,9 +2831,9 @@ dependencies = [
 
 [[package]]
 name = "solana-compute-budget-program"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "685567c221f6bb5b64387f7b45d03036ad112b2ecbcd0f94b11204efab9f891e"
+checksum = "23c8e78b552670f029af0b9411d31636e47a1b0613828c372025e9de79867267"
 dependencies = [
  "solana-program-runtime",
  "solana-sdk",
@@ -2701,9 +2841,9 @@ dependencies = [
 
 [[package]]
 name = "solana-config-program"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f4b04403ff77f09eba5cf94078c1178161e26d346245b06180866ab5286fe6b"
+checksum = "dd635397dfe4cd775fb5b5cb1869418392457d53692f47780a506055fce190ff"
 dependencies = [
  "bincode",
  "chrono",
@@ -2715,9 +2855,9 @@ dependencies = [
 
 [[package]]
 name = "solana-faucet"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a11e1b6d5ce435bb3df95f2a970cd80500a8abf94ea87558c35fe0cce8456ab"
+checksum = "91c8dc020249fef035d620a83bf1d02de62b7080df47933ec905914f97181084"
 dependencies = [
  "bincode",
  "byteorder",
@@ -2738,9 +2878,9 @@ dependencies = [
 
 [[package]]
 name = "solana-frozen-abi"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5f69a79200f5ba439eb8b790c5e00beab4d1fae4da69ce023c69c6ac1b55bf1"
+checksum = "86951897447999a40d69a684450a7f95816faa472272af71e8a167df5763dcea"
 dependencies = [
  "bs58 0.4.0",
  "bv",
@@ -2758,21 +2898,21 @@ dependencies = [
 
 [[package]]
 name = "solana-frozen-abi-macro"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "402fffb54bf5d335e6df26fc1719feecfbd7a22fafdf6649fe78380de3c47384"
+checksum = "69a1bfa9b54b42f7b0943cf975ee0b831ca45976ee0219308023ce8a34ba3da2"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
  "rustc_version",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
 name = "solana-logger"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "942dc59fc9da66d178362051b658646b65dc11cea0bc804e4ecd2528d3c1279f"
+checksum = "3ac46ee30e6e938fcffe4e4a53cb0ef53518b3aeb839adffe696678eda8d54f0"
 dependencies = [
  "env_logger",
  "lazy_static",
@@ -2781,9 +2921,9 @@ dependencies = [
 
 [[package]]
 name = "solana-measure"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ccd5b1278b115249d6ca5a203fd852f7d856e048488c24442222ee86e682bd9"
+checksum = "bf160e0690e8349e31ace82f64d1d98275cdc1322be498f34fa51872b3853079"
 dependencies = [
  "log",
  "solana-sdk",
@@ -2791,9 +2931,9 @@ dependencies = [
 
 [[package]]
 name = "solana-metrics"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9774cd8309f599797b1612731fbc56df6c612879ab4923a3dc7234400eea419"
+checksum = "13a5278e53eaf159d604647babe7c1a1c5d112c60ea4b412a57f2848daffe1e7"
 dependencies = [
  "env_logger",
  "gethostname",
@@ -2805,9 +2945,9 @@ dependencies = [
 
 [[package]]
 name = "solana-net-utils"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cb530af085d8aab563530ed39703096aa526249d350082823882fdd59cdf839"
+checksum = "9db351628adf28dfc5e096a983e25f4818a85755f5b28f0a112619f6852feb62"
 dependencies = [
  "bincode",
  "clap 2.34.0",
@@ -2826,9 +2966,9 @@ dependencies = [
 
 [[package]]
 name = "solana-perf"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4117c0cf7753bc18f3a09f4973175c3f2c7c5d8e3c9bc15cab09060b06f3434f"
+checksum = "44af9611198ccdfd226e513951414c63a209c9382bc26da557fd98788274a426"
 dependencies = [
  "ahash",
  "bincode",
@@ -2855,9 +2995,9 @@ dependencies = [
 
 [[package]]
 name = "solana-program"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a463f546a2f5842d35974bd4691ae5ceded6785ec24db440f773723f6ce4e11"
+checksum = "d672eaac30e97d719c1cf05e6ec1d36971f057b19fbf18f645c54bebd580aa40"
 dependencies = [
  "base64 0.13.0",
  "bincode",
@@ -2879,7 +3019,7 @@ dependencies = [
  "log",
  "num-derive",
  "num-traits",
- "parking_lot 0.11.2",
+ "parking_lot",
  "rand 0.7.3",
  "rustc_version",
  "rustversion",
@@ -2898,9 +3038,9 @@ dependencies = [
 
 [[package]]
 name = "solana-program-runtime"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09841673334eab958d5bedab9c9d75ed2ff7a7ef70e7dfd6b239c6838a3d79ec"
+checksum = "fa9e14fce935bcec0e44ca102364fbca9ebd7a2646c1088736a59ed4b32f7348"
 dependencies = [
  "base64 0.13.0",
  "bincode",
@@ -2922,9 +3062,9 @@ dependencies = [
 
 [[package]]
 name = "solana-rayon-threadlimit"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f92893e3129dfabb703cd045e1367f3ced91202a2d0b6179a3dcd62ad6bead3b"
+checksum = "6fe258d38f4ce03fde1c2a6297665605fb3fb60c4cb3a980dda84dfa99cf7a5b"
 dependencies = [
  "lazy_static",
  "num_cpus",
@@ -2932,9 +3072,9 @@ dependencies = [
 
 [[package]]
 name = "solana-remote-wallet"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "315534baecaae3f804548ccc4738d73ae01bf6523219787ebe55ee66d8db9a85"
+checksum = "78d5f306b3673b15525ef35eb5021ffba0714ef332a96efce4ac4e87a6ba91a5"
 dependencies = [
  "base32",
  "console",
@@ -2943,7 +3083,7 @@ dependencies = [
  "log",
  "num-derive",
  "num-traits",
- "parking_lot 0.11.2",
+ "parking_lot",
  "qstring",
  "semver",
  "solana-sdk",
@@ -2953,9 +3093,9 @@ dependencies = [
 
 [[package]]
 name = "solana-runtime"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bd06e905260433f7e8d18bccb2e2eb2aa5cc53379d104d331ddeb12e13230a0"
+checksum = "25f4729256e9c4b8360ab3c6bc438c6b02e4ed7504c1050c6773efa933b914ca"
 dependencies = [
  "arrayref",
  "bincode",
@@ -3008,9 +3148,9 @@ dependencies = [
 
 [[package]]
 name = "solana-sdk"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6560e605c68fa1e3e66a9d3c8529d097d402e1183f80dd06a2c870d0ecb795c2"
+checksum = "515e506e64dad5bd7d2943b1dbc2262e73b96a7f3c79cf1438f847ad0138bedf"
 dependencies = [
  "assert_matches",
  "base64 0.13.0",
@@ -3059,22 +3199,22 @@ dependencies = [
 
 [[package]]
 name = "solana-sdk-macro"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c834b4e02ac911b13c13aed08b3f847e722f6be79d31b1c660c1dbd2dee83cdb"
+checksum = "619fb6c23a123c4f9aba21cb9fe8cc4d21d55c056c2cea3f1e5a809b2f7e7b91"
 dependencies = [
  "bs58 0.4.0",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
  "rustversion",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
 name = "solana-stake-program"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f92597c0ed16d167d5ee48e5b13e92dfaed9c55b23a13ec261440136cd418649"
+checksum = "c467242286a87f97f84494652c8c7e8607718ee1cd67a733011531caa8fa2ff0"
 dependencies = [
  "bincode",
  "log",
@@ -3095,9 +3235,9 @@ dependencies = [
 
 [[package]]
 name = "solana-transaction-status"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "612a51efa19380992e81fc64a2fb55d42aed32c67d795848d980cbe1f9693250"
+checksum = "b4cc4ee14b8a7d33d615cc4e3af85bf140eb3431a4d7488502283b875cb5980d"
 dependencies = [
  "Inflector",
  "base64 0.12.3",
@@ -3122,9 +3262,9 @@ dependencies = [
 
 [[package]]
 name = "solana-version"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "222e2c91640d45cd9617dfc07121555a9bdac10e6e105f6931b758f46db6faaa"
+checksum = "0db638bc659d6fc0373068596e4384d263a1e01df32f6043f4bf6635ee638d04"
 dependencies = [
  "log",
  "rustc_version",
@@ -3137,9 +3277,9 @@ dependencies = [
 
 [[package]]
 name = "solana-vote-program"
-version = "1.9.20"
+version = "1.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4cc64945010e9e76d368493ad091aa5cf43ee16f69296290ebb5c815e433232"
+checksum = "a39e1ee3f707c750bd796e851cc6010bddb7783428f10ed4a377b89d6a4afcca"
 dependencies = [
  "bincode",
  "log",
@@ -3291,9 +3431,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.92"
+version = "1.0.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ff7c592601f11445996a06f8ad0c27f094a58857c2f89e97974ab9235b92c52"
+checksum = "a07e33e919ebcd69113d5be0e4d70c5707004ff45188910106854f38b960df4a"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
@@ -3308,7 +3448,7 @@ checksum = "f36bdaa60a83aca3921b5259d5400cbf5e90fc51931376a9bd4a0eb79aa7210f"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
  "unicode-xid 0.2.3",
 ]
 
@@ -3388,7 +3528,7 @@ checksum = "0396bc89e626244658bef819e22d0cc459e795a5ebe878e6ec336d1674a8d79a"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -3437,20 +3577,20 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.18.1"
+version = "1.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dce653fb475565de9f6fb0614b28bca8df2c430c0cf84bcd9c843f15de5414cc"
+checksum = "b9d0183f6f6001549ab68f8c7585093bb732beefbcf6d23a10b9b95c73a1dd49"
 dependencies = [
+ "autocfg",
  "bytes",
  "libc",
  "memchr",
  "mio",
  "num_cpus",
  "once_cell",
- "parking_lot 0.12.0",
+ "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
- "socket2",
  "tokio-macros",
  "winapi",
 ]
@@ -3463,7 +3603,7 @@ checksum = "b557f72f448c511a979e2564e55d74e6c4432fc96ff4f6241bc6bded342643b7"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -3479,9 +3619,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0edfdeb067411dba2044da6d1cb2df793dd35add7888d73c16e3381ded401764"
+checksum = "f988a1a1adc2fb21f9c12aa96441da33a1728193ae0b95d2be22dbd17fcb4e5c"
 dependencies = [
  "bytes",
  "futures-core",
@@ -3526,7 +3666,7 @@ checksum = "cc6b8ad3567499f98a1db7a752b07a7c8c7c7c34c332ec00effb2b0027974b7c"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
 ]
 
 [[package]]
@@ -3703,12 +3843,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
 
 [[package]]
-name = "wasi"
-version = "0.11.0+wasi-snapshot-preview1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
-
-[[package]]
 name = "wasm-bindgen"
 version = "0.2.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3729,7 +3863,7 @@ dependencies = [
  "log",
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
  "wasm-bindgen-shared",
 ]
 
@@ -3763,7 +3897,7 @@ checksum = "99ec0dc7a4756fffc231aab1b9f2f578d23cd391390ab27f952ae0c9b3ece20b"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -3835,49 +3969,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
-name = "windows-sys"
-version = "0.36.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea04155a16a59f9eab786fe12a4a450e75cdb175f9e0d80da1e17db09f55b8d2"
-dependencies = [
- "windows_aarch64_msvc",
- "windows_i686_gnu",
- "windows_i686_msvc",
- "windows_x86_64_gnu",
- "windows_x86_64_msvc",
-]
-
-[[package]]
-name = "windows_aarch64_msvc"
-version = "0.36.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bb8c3fd39ade2d67e9874ac4f3db21f0d710bee00fe7cab16949ec184eeaa47"
-
-[[package]]
-name = "windows_i686_gnu"
-version = "0.36.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "180e6ccf01daf4c426b846dfc66db1fc518f074baa793aa7d9b9aaeffad6a3b6"
-
-[[package]]
-name = "windows_i686_msvc"
-version = "0.36.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2e7917148b2812d1eeafaeb22a97e4813dfa60a3f8f78ebe204bcc88f12f024"
-
-[[package]]
-name = "windows_x86_64_gnu"
-version = "0.36.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dcd171b8776c41b97521e5da127a2d86ad280114807d0b2ab1e462bc764d9e1"
-
-[[package]]
-name = "windows_x86_64_msvc"
-version = "0.36.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c811ca4a8c853ef420abd8592ba53ddbbac90410fab6903b3e79972a631f7680"
-
-[[package]]
 name = "winreg"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3927,7 +4018,7 @@ checksum = "3f8f187641dad4f680d25c4bfc4225b418165984179f26ca76ec4fb6441d3a17"
 dependencies = [
  "proc-macro2 1.0.38",
  "quote 1.0.18",
- "syn 1.0.92",
+ "syn 1.0.94",
  "synstructure",
 ]
 
