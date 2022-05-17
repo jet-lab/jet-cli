@@ -1,3 +1,18 @@
+// Copyright (C) 2022 JET PROTOCOL HOLDINGS, LLC.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 use anchor_client::solana_sdk::pubkey::Pubkey;
 
 #[derive(Debug)]
@@ -10,6 +25,36 @@ pub struct StakePoolAddresses {
 /// Derive the public key of a `jet_auth::UserAuthentication` program account.
 pub fn derive_auth_account(owner: &Pubkey, auth_program: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(&[owner.as_ref()], auth_program).0
+}
+
+/// Derive the public key of a `jet_bonds::BondManager` program account.
+pub fn derive_bond_manager_account(
+    token_mint: &Pubkey,
+    seed: u64,
+    bonds_program: &Pubkey,
+) -> Pubkey {
+    Pubkey::find_program_address(
+        &[
+            b"bond_manager",
+            token_mint.as_ref(),
+            seed.to_le_bytes().as_ref(),
+        ],
+        bonds_program,
+    )
+    .0
+}
+
+/// Derive the public key of a bond ticket token account.
+pub fn derive_bond_ticket_token_account(
+    manager: &Pubkey,
+    recipient: &Pubkey,
+    token_program: &Pubkey,
+) -> Pubkey {
+    Pubkey::find_program_address(
+        &[b"bond_ticket_account", manager.as_ref(), recipient.as_ref()],
+        token_program,
+    )
+    .0
 }
 
 /// Derive the public key of a `jet_margin::MarginAccount` program account.
@@ -79,6 +124,28 @@ mod tests {
         assert_eq!(
             auth.to_string(),
             "L2QDXAsEpjW1kmyCJSgJnifrMLa5UiG19AUFa83hZND"
+        );
+    }
+
+    #[test]
+    fn derive_correct_bond_manager_address() {
+        let manager = derive_bond_manager_account(&Pubkey::default(), 0, &jet_bonds::ID);
+        assert_eq!(
+            manager.to_string,
+            "BkXge7vivbHe3AEBJiAFPytknjaRm9qeKyvsf119GVLn"
+        );
+    }
+
+    #[test]
+    fn derive_correct_bond_ticket_token_account_address() {
+        let btta = derive_bond_ticket_token_account(
+            &Pubkey::default(),
+            &Pubkey::default(),
+            &anchor_spl::token::ID,
+        );
+        assert_eq!(
+            btta.to_string,
+            "A2xC97iRBS8TLcDL174NJKHrzq3deeRPinxq43jX8vQv"
         );
     }
 

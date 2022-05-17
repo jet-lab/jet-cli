@@ -1,9 +1,18 @@
 <div align="center">
+  <img height="125" src="https://293354890-files.gitbook.io/~/files/v0/b/gitbook-legacy-files/o/assets%2F-M_72skN1dye71puMdjs%2F-Miqzl5oK1cXXAkARfER%2F-Mis-yeKp1Krh7JOFzQG%2Fjet_logomark_color.png?alt=media&token=0b8dfc84-37d7-455d-9dfd-7bb59cee5a1a" />
+
   <h1>Jet CLI</div>
 
   <p align="center">
-    <a target="_blank" href="https://github.com/jet-lab/jet-cli/actions/workflows/test.yaml"><img alt="Test" src="https://img.shields.io/github/workflow/status/jet-lab/jet-cli/Test?label=Test&logo=github"></a>
-    <a target="_blank" href="https://github.com/jet-lab/jet-cli/tree/master/Cargo.toml"><img alt="Version" src="https://img.shields.io/github/v/release/jet-lab/jet-cli?color=orange&label=jet-cli" /></a>
+    <a target="_blank" href="https://github.com/jet-lab/jet-cli/actions/workflows/test.yaml">
+      <img alt="Test" src="https://img.shields.io/github/workflow/status/jet-lab/jet-cli/Test?label=Test&logo=github">
+    </a>
+    <a target="_blank" href="https://github.com/jet-lab/jet-cli/tree/master/Cargo.toml">
+      <img alt="Version" src="https://img.shields.io/github/v/release/jet-lab/jet-cli?color=orange&label=jet-cli" />
+    </a>
+    <a target="_blank" href="https://github.com/jet-lab/jet-cli/tree/master/LICENSE">
+      <img alt="License" src="https://img.shields.io/badge/License-AGPL--3.0--or--later-blue" />
+    </a>
   </p>
 
   <p align="center">

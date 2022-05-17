@@ -4,6 +4,8 @@ version = "0.1.7"
 description = "Jet Protocol command line tool for program requests"
 edition = "2021"
 repository = "https://github.com/jet-lab/jet-cli"
+readme = "https://github.com/jet-lab/jet-cli#readme"
+license = "AGPL-3.0-or-later"
 
 [[bin]]
 name = "jet"
