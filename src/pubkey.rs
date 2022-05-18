@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#![allow(unused)]
+
 use anchor_client::solana_sdk::pubkey::Pubkey;
 
 #[derive(Debug)]
@@ -131,7 +133,7 @@ mod tests {
     fn derive_correct_bond_manager_address() {
         let manager = derive_bond_manager_account(&Pubkey::default(), 0, &jet_bonds::ID);
         assert_eq!(
-            manager.to_string,
+            manager.to_string(),
             "BkXge7vivbHe3AEBJiAFPytknjaRm9qeKyvsf119GVLn"
         );
     }
@@ -144,7 +146,7 @@ mod tests {
             &anchor_spl::token::ID,
         );
         assert_eq!(
-            btta.to_string,
+            btta.to_string(),
             "A2xC97iRBS8TLcDL174NJKHrzq3deeRPinxq43jX8vQv"
         );
     }
