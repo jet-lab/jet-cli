@@ -134,7 +134,7 @@ mod tests {
         let manager = derive_bond_manager_account(&Pubkey::default(), 0, &jet_bonds::ID);
         assert_eq!(
             manager.to_string(),
-            "BkXge7vivbHe3AEBJiAFPytknjaRm9qeKyvsf119GVLn"
+            "EtHTxCYMp7zrJiN6kAKBjrMBzAMYYj2USFnyhiHa7UMe"
         );
     }
 
