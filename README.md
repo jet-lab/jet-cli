@@ -73,7 +73,7 @@ echo $account
 jet-cli margin-pool deposit --account $account --pool $pool --source $source 1
 ```
 
-## Troubleshooting
+# Troubleshooting
 
 `Error: Message("missing field `keypair_path`", Some(...))`
 
