@@ -77,6 +77,14 @@ enum Command {
         #[clap(subcommand)]
         subcmd: margin::MarginCommand,
     },
+    /// jet_margin_pool program commands.
+    MarginPool {
+        /// Override of the `jet_margin_pool` program ID.
+        #[clap(global = true, long, default_value_t = jet_margin_pool::ID)]
+        program: Pubkey,
+        #[clap(subcommand)]
+        subcmd: margin_pool::MarginPoolCommand,
+    },
     /// jet_staking program commands.
     Staking {
         /// Override of the `jet_staking` program ID.
@@ -95,6 +103,7 @@ pub fn run(opts: Opts) -> Result<()> {
         Command::Auth { program, subcmd } => auth::entry(&opts.cfg, &program, &subcmd),
         Command::Bonds { program, subcmd } => bonds::entry(&opts.cfg, &program, &subcmd),
         Command::Margin { program, subcmd } => margin::entry(&opts.cfg, &program, &subcmd),
+        Command::MarginPool { program, subcmd } => margin_pool::entry(&opts.cfg, &program, &subcmd),
         Command::Staking { program, subcmd } => staking::entry(&opts.cfg, &program, &subcmd),
     }
 }

@@ -223,9 +223,7 @@ fn process_close_account(cfg: &Config, receiver: &Option<Pubkey>, seed: u16) -> 
             .args(instruction::CloseAccount {})
             .signer(signer.as_ref()),
         vec!["jet_margin::CloseAccount"],
-    )?;
-
-    Ok(())
+    )
 }
 
 /// The function handler to allow users to close a position on their margin account.
