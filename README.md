@@ -22,7 +22,6 @@
   </p>
 </div>
 
-
 ## Installation
 
 ### Download Pre-built Binary (Recommended)
@@ -39,4 +38,53 @@ Each [release](https://github.com/jet-lab/jet-cli/releases) of the CLI contains 
 
 ```sh
 cargo install --git https://github.com/jet-lab/jet-cli --tag <TAG> jet-cli --locked
+```
+
+### Checkout and Run from Source
+
+```sh
+# Clone Jet CLI
+git clone https://github.com/jet-lab/jet-cli
+cd jet-cli
+
+# Install submodules
+git submodule update
+
+# Build and run (This may take a while)
+cargo run
+
+# Create a devnet margin account
+cargo run margin create-account -u d --seed 0
+```
+
+### Create Margin Account
+
+```sh
+# Create a devnet margin account
+jet-cli margin create-account -u d --seed 0
+
+# Store the margin account pubkey in $account
+account=$(jet-cli margin derive --seed 0)
+
+echo $account
+# 77tJm3j57zMaGR1bFDgWKeJphQarK3fkhB3VPT912zha
+
+# Deposit into the pool (Requires the pool and token account pubkey)
+jet-cli margin-pool deposit --account $account --pool $pool --source $source 1
+```
+
+# Troubleshooting
+
+`` Error: Message("missing field `keypair_path`", Some(...))  ``
+
+Ensure you have a solana config file at ~/.config/solana/cli/config.yml with contents like the following.
+
+```yaml
+---
+json_rpc_url: "http://localhost:8899"
+websocket_url: ""
+keypair_path: ~/.config/solana/id.json
+address_labels:
+  "11111111111111111111111111111111": System Program
+commitment: confirmed
 ```
