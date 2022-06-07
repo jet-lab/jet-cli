@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use anchor_client::solana_client::rpc_filter::RpcFilterType;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_spl::token::ID as token_program;
 use anyhow::Result;
@@ -24,6 +25,7 @@ use crate::config::{Config, Overrides};
 use crate::macros::assert_exists;
 use crate::program::{create_program_client, send_with_approval};
 use crate::pubkey::derive_margin_pool;
+use crate::terminal::{print_serialized, DisplayOptions};
 
 /// Margin pool program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -68,6 +70,20 @@ pub enum MarginPoolCommand {
         #[clap(long)]
         token_mint: Pubkey,
     },
+    /// Get the account data for a margin pool or all that exist.
+    Get {
+        /// Public key of specific pool to get.
+        address: Option<Pubkey>,
+        /// Output data as serialized JSON.
+        #[clap(long)]
+        json: bool,
+        /// Formatted data output.
+        #[clap(long)]
+        pretty: bool,
+        /// Token mint to derive margin pool.
+        #[clap(long, conflicts_with = "address")]
+        token_mint: Option<Pubkey>,
+    },
 }
 
 /// The main entry point and handler for all margin pool
@@ -90,6 +106,17 @@ pub fn entry(overrides: &Overrides, program_id: &Pubkey, subcmd: &MarginPoolComm
             source,
         } => process_deposit(&cfg, *amount, account, destination, pool, source),
         MarginPoolCommand::Derive { token_mint } => process_derive(&cfg, token_mint),
+        MarginPoolCommand::Get {
+            address,
+            json,
+            pretty,
+            token_mint,
+        } => process_get(
+            &cfg,
+            address,
+            token_mint,
+            DisplayOptions::from_args(*json, *pretty),
+        ),
     }
 }
 
@@ -166,4 +193,32 @@ fn process_deposit(
 fn process_derive(cfg: &Config, token_mint: &Pubkey) -> Result<()> {
     println!("{}", derive_margin_pool(token_mint, &cfg.program_id));
     Ok(())
+}
+
+/// The function handler for fetching and displaying program account data for all existing
+/// or a specific margin pool account.
+fn process_get(
+    cfg: &Config,
+    address: &Option<Pubkey>,
+    token_mint: &Option<Pubkey>,
+    display: DisplayOptions,
+) -> Result<()> {
+    let (program, _) = create_program_client(cfg);
+
+    if let Some(addr) = address {
+        return print_serialized(program.account::<MarginPool>(*addr)?, &display);
+    } else if let Some(tm) = token_mint {
+        let pool = derive_margin_pool(tm, &program.id());
+        return print_serialized(program.account::<MarginPool>(pool)?, &display);
+    }
+
+    let pools: Vec<MarginPool> = program
+        .accounts(vec![RpcFilterType::DataSize(
+            8 + std::mem::size_of::<MarginPool>() as u64,
+        )])?
+        .iter()
+        .map(|acc| acc.1)
+        .collect();
+
+    print_serialized(pools, &display)
 }
