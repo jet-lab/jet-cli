@@ -68,6 +68,11 @@ pub fn derive_margin_account(owner: &Pubkey, seed: u16, margin_program: &Pubkey)
     .0
 }
 
+/// Derive the public key of a `jet_margin_pool::MarginPool` program account.
+pub fn derive_margin_pool(token_mint: &Pubkey, margin_pool_program: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(&[token_mint.as_ref()], margin_pool_program).0
+}
+
 /// Derive the public key of a governance max vote weight record program account.
 pub fn derive_max_voter_weight_record(realm: &Pubkey, staking_program: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(
@@ -157,6 +162,15 @@ mod tests {
         assert_eq!(
             margin.to_string(),
             "F8VbfbXdyeTonhEj2hs3mNb8VUpoYd78wPreLQSqRzj8"
+        );
+    }
+
+    #[test]
+    fn derive_correct_margin_pool_address() {
+        let pool = derive_margin_pool(&Pubkey::default(), &jet_margin_pool::ID);
+        assert_eq!(
+            pool.to_string(),
+            "2ZuLUb2CsyXn1CKEL7Y76hWj8PnySPeJ77BKdX9JUarg",
         );
     }
 

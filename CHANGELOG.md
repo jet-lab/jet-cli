@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+* add `MarginPoolCommand::Derive` subcommand.
+
 ## [0.1.8] - 2022-06-05
 
 _Beginning of tracked version and feature history_

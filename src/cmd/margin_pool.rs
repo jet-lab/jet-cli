@@ -23,6 +23,7 @@ use jet_margin_pool::{accounts, instruction, MarginPool};
 use crate::config::{Config, Overrides};
 use crate::macros::assert_exists;
 use crate::program::{create_program_client, send_with_approval};
+use crate::pubkey::derive_margin_pool;
 
 /// Margin pool program based subcommand enum variants.
 #[derive(Debug, Subcommand)]
@@ -61,6 +62,12 @@ pub enum MarginPoolCommand {
         #[clap(long)]
         source: Pubkey,
     },
+    /// Derive the public key of a margin pool.
+    Derive {
+        /// The underlying token mint address.
+        #[clap(long)]
+        token_mint: Pubkey,
+    },
 }
 
 /// The main entry point and handler for all margin pool
@@ -82,6 +89,7 @@ pub fn entry(overrides: &Overrides, program_id: &Pubkey, subcmd: &MarginPoolComm
             pool,
             source,
         } => process_deposit(&cfg, *amount, account, destination, pool, source),
+        MarginPoolCommand::Derive { token_mint } => process_derive(&cfg, token_mint),
     }
 }
 
@@ -152,4 +160,10 @@ fn process_deposit(
             .signer(signer.as_ref()),
         vec!["jet_margin_pool::Deposit"],
     )
+}
+
+/// The function handler to derive the public key of a `jet_margin_pool::MarginPool`.
+fn process_derive(cfg: &Config, token_mint: &Pubkey) -> Result<()> {
+    println!("{}", derive_margin_pool(token_mint, &cfg.program_id));
+    Ok(())
 }
