@@ -27,7 +27,7 @@ indicatif = "0.16"
 jet-proto-auth = { git = "https://github.com/jet-lab/jet-governance", branch = "master", features = ["cli"] }
 jet-bonds = { path = "./bonded-osprey/programs/bonds", features = ["cli"] }
 jet-margin = { git = "https://github.com/jet-lab/jet-v2", branch = "master", features = ["cli"] }
-jet-margin-pool = { git = "https://github.com/jet-lab/jet-v2", branch = "master", features = ["no-entrypoint"] }
+jet-margin-pool = { git = "https://github.com/jet-lab/jet-v2", branch = "master", features = ["cli"] }
 jet-metadata = { git = "https://github.com/jet-lab/jet-v2", branch = "master", features = ["no-entrypoint"] }
 jet-proto-rewards = { git = "https://github.com/jet-lab/jet-governance", branch = "master", features = ["cli"] }
 jet-proto-staking = { git = "https://github.com/jet-lab/jet-governance", branch = "master", features = ["cli"] }

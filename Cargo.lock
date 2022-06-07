@@ -30,7 +30,7 @@ checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 [[package]]
 name = "agnostic-orderbook"
 version = "0.1.0"
-source = "git+https://github.com/Bonfida/agnostic-orderbook.git?branch=main#7133f013e0d28f5680a756c26a143d5527f8cf35"
+source = "git+https://github.com/Bonfida/agnostic-orderbook.git?branch=main#aa20c1e112187ad32f308838740a6c34310a40b5"
 dependencies = [
  "bonfida-utils",
  "borsh",
@@ -1368,9 +1368,9 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "0.2.7"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff8670570af52249509a86f5e3e18a08c60b177071826898fde8997cf5f6bfbb"
+checksum = "75f43d41e26995c17e71ee126451dd3941010b0514a81a9d11f3b341debc2399"
 dependencies = [
  "bytes",
  "fnv",
@@ -1554,7 +1554,7 @@ dependencies = [
 [[package]]
 name = "jet-margin"
 version = "0.1.0"
-source = "git+https://github.com/jet-lab/jet-v2?branch=master#092aa60536f99905e2fd53558f21134bf893a435"
+source = "git+https://github.com/jet-lab/jet-v2?branch=master#3d049e5ce14c362fca247b8a2cd9d9a0fdcfd376"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -1569,7 +1569,7 @@ dependencies = [
 [[package]]
 name = "jet-margin-pool"
 version = "0.1.0"
-source = "git+https://github.com/jet-lab/jet-v2?branch=master#092aa60536f99905e2fd53558f21134bf893a435"
+source = "git+https://github.com/jet-lab/jet-v2?branch=master#3d049e5ce14c362fca247b8a2cd9d9a0fdcfd376"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -1579,13 +1579,14 @@ dependencies = [
  "jet-metadata",
  "jet-proto-math",
  "pyth-sdk-solana",
+ "serde",
  "static_assertions",
 ]
 
 [[package]]
 name = "jet-metadata"
 version = "0.1.0"
-source = "git+https://github.com/jet-lab/jet-v2?branch=master#092aa60536f99905e2fd53558f21134bf893a435"
+source = "git+https://github.com/jet-lab/jet-v2?branch=master#3d049e5ce14c362fca247b8a2cd9d9a0fdcfd376"
 dependencies = [
  "anchor-lang",
  "solana-program",

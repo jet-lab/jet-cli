@@ -213,11 +213,11 @@ fn process_get(
     }
 
     let pools: Vec<MarginPool> = program
-        .accounts(vec![RpcFilterType::DataSize(
+        .accounts::<MarginPool>(vec![RpcFilterType::DataSize(
             8 + std::mem::size_of::<MarginPool>() as u64,
         )])?
         .iter()
-        .map(|acc| acc.1)
+        .map(|acc| acc.1.to_owned())
         .collect();
 
     print_serialized(pools, &display)

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.1.9] - 2022-06-07
+
+### Added
+
 * add `MarginPoolCommand::Derive` subcommand.
 * add `MarginPoolCommand::Get` to retrieve specific or all margin pool accounts.
 
