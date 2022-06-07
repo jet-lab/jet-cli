@@ -22,9 +22,9 @@
   </p>
 </div>
 
-# Installation
+## Installation
 
-## Download Pre-built Binary (Recommended)
+### Download Pre-built Binary (Recommended)
 
 Each [release](https://github.com/jet-lab/jet-cli/releases) of the CLI contains a pre-built binary in a `.tar.gz` for the following targets:
 
@@ -34,13 +34,13 @@ Each [release](https://github.com/jet-lab/jet-cli/releases) of the CLI contains 
 
 > If you require a new build target to be added to the release builds, please create an issue on this repository stating so as the preferred request method.
 
-## Install Binary from Source
+### Build from Source
 
 ```sh
 cargo install --git https://github.com/jet-lab/jet-cli --tag <TAG> jet-cli --locked
 ```
 
-## Checkout and Run from Source
+### Checkout and Run from Source
 
 ```sh
 # Clone Jet CLI
@@ -57,7 +57,7 @@ cargo run
 cargo run margin create-account -u d --seed 0
 ```
 
-## Create Margin Account
+### Create Margin Account
 
 ```sh
 # Create a devnet margin account
@@ -75,9 +75,9 @@ jet-cli margin-pool deposit --account $account --pool $pool --source $source 1
 
 # Troubleshooting
 
-`Error: Message("missing field `keypair_path`", Some(...))`
+`` Error: Message("missing field `keypair_path`", Some(...))  ``
 
-Ensure you have a solana config file at ~/.config/solana/cli/config.yml with contents like the following
+Ensure you have a solana config file at ~/.config/solana/cli/config.yml with contents like the following.
 
 ```yaml
 ---
