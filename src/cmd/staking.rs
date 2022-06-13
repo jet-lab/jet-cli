@@ -40,18 +40,19 @@ pub enum StakingCommand {
     /// Get the account data for user's stake account.
     Account {
         /// Base-58 pubkey of the account.
+        #[clap(value_parser)]
         address: Option<Pubkey>,
         /// Output data as serialized JSON.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         json: bool,
         /// Base-58 pubkey of the account owner.
-        #[clap(long, conflicts_with = "address")]
+        #[clap(long, value_parser, conflicts_with = "address")]
         owner: Option<Pubkey>,
         /// The stake pool associated with the account.
-        #[clap(long, conflicts_with = "address", default_value = DEFAULT_STAKE_POOL)]
+        #[clap(long, value_parser, conflicts_with = "address", default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
         /// Formatted data output.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         pretty: bool,
     },
     /// Deposit to a stake pool from your account.
@@ -59,97 +60,97 @@ pub enum StakingCommand {
         /// The amount of token to stake in the pool. The program
         /// by default will attempt to stake as much as possible if
         /// no amount is provided.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         amount: Option<u64>,
         /// Stake pool to deposit.
-        #[clap(long, default_value = DEFAULT_STAKE_POOL)]
+        #[clap(long, value_parser, default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
     },
     /// Close a stake account.
     CloseAccount {
         /// Stake pool associated with the account.
-        #[clap(long, default_value = DEFAULT_STAKE_POOL)]
+        #[clap(long, value_parser, default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
         /// Wallet receiving the rent funds.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         receiver: Option<Pubkey>,
     },
     /// Create a new stake account.
     CreateAccount {
         /// Stake pool to associate the new account.
-        #[clap(long, default_value = DEFAULT_STAKE_POOL)]
+        #[clap(long, value_parser, default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
     },
     /// Create a new staking pool.
     CreatePool {
         /// Seed for the new stake pool.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         seed: String,
         /// Governance realm to associate with the new pool.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         realm: Pubkey,
         /// Token mint for the stake pool.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         token_mint: Pubkey,
         /// Unbonding period as u64.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         unbond_period: u64,
     },
     /// Derive the public key of a `jet_staking::StakeAccount`.
     DeriveAccount {
         /// Base-58 pubkey of the account owner.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         owner: Option<Pubkey>,
         /// Stake pool account to use.
-        #[clap(long, default_value = DEFAULT_STAKE_POOL)]
+        #[clap(long, value_parser, default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
     },
     /// Derive the public key of a `jet_staking::StakePool`.
     DerivePool {
         /// The string seed used for the pool.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         seed: String,
         /// Display related vault and mint pubkeys.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         show_related: bool,
     },
     /// Get the account data for a stake pool.
     Pool {
         /// Base-58 public key of the pool.
-        #[clap(default_value = DEFAULT_STAKE_POOL)]
+        #[clap(value_parser, default_value = DEFAULT_STAKE_POOL)]
         address: Pubkey,
         /// Output data as serialized JSON.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         json: bool,
         /// Formatted data output.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         pretty: bool,
     },
     /// Withdraw bonded stake funds from a pool.
     WithdrawBonded {
         /// Amount of funds to withdraw.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         amount: u64,
         /// Stake pool to withdraw.
-        #[clap(long, default_value = DEFAULT_STAKE_POOL)]
+        #[clap(long, value_parser, default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
         /// Wallet to receive the withdrawn funds.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         receiver: Option<Pubkey>,
     },
     /// Withdraw bonded stake funds from a pool.
     WithdrawUnbonded {
         /// Stake pool to withdraw.
-        #[clap(long, default_value = DEFAULT_STAKE_POOL)]
+        #[clap(long, value_parser, default_value = DEFAULT_STAKE_POOL)]
         pool: Pubkey,
         /// Wallet to receive the account rent.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         rent_receiver: Option<Pubkey>,
         /// Wallet to receive withdrawn funds.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         token_receiver: Option<Pubkey>,
         /// Public key of the unbonding account.
-        #[clap(long = "account")]
+        #[clap(long = "account", value_parser)]
         unbonding_account: Pubkey,
     },
 }

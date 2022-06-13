@@ -48,7 +48,7 @@ enum Command {
     /// jet_rewards program commands for airdrops.
     Airdrop {
         /// Override of the `jet_rewards` program ID.
-        #[clap(global = true, long, default_value_t = jet_rewards::ID)]
+        #[clap(global = true, long, value_parser, default_value_t = jet_rewards::ID)]
         program: Pubkey,
         #[clap(subcommand)]
         subcmd: airdrop::AirdropCommand,
@@ -56,7 +56,7 @@ enum Command {
     /// jet_auth program commands.
     Auth {
         /// Override of the `jet_auth` program ID.
-        #[clap(global = true, long, default_value_t = jet_auth::ID)]
+        #[clap(global = true, long, value_parser, default_value_t = jet_auth::ID)]
         program: Pubkey,
         #[clap(subcommand)]
         subcmd: auth::AuthCommand,
@@ -64,7 +64,7 @@ enum Command {
     /// jet_bonds program commands.
     Bonds {
         /// Override of the `jet_bonds` program ID.
-        #[clap(global = true, long, default_value_t = jet_bonds::ID)]
+        #[clap(global = true, long, value_parser, default_value_t = jet_bonds::ID)]
         program: Pubkey,
         #[clap(subcommand)]
         subcmd: bonds::BondsCommand,
@@ -72,7 +72,7 @@ enum Command {
     /// jet_margin program commands.
     Margin {
         /// Override of the `jet_margin` program ID.
-        #[clap(global = true, long, default_value_t = jet_margin::ID)]
+        #[clap(global = true, long, value_parser, default_value_t = jet_margin::ID)]
         program: Pubkey,
         #[clap(subcommand)]
         subcmd: margin::MarginCommand,
@@ -80,7 +80,7 @@ enum Command {
     /// jet_margin_pool program commands.
     MarginPool {
         /// Override of the `jet_margin_pool` program ID.
-        #[clap(global = true, long, default_value_t = jet_margin_pool::ID)]
+        #[clap(global = true, long, value_parser, default_value_t = jet_margin_pool::ID)]
         program: Pubkey,
         #[clap(subcommand)]
         subcmd: margin_pool::MarginPoolCommand,
@@ -88,7 +88,7 @@ enum Command {
     /// jet_staking program commands.
     Staking {
         /// Override of the `jet_staking` program ID.
-        #[clap(global = true, long, default_value_t = jet_staking::ID)]
+        #[clap(global = true, long, value_parser, default_value_t = jet_staking::ID)]
         program: Pubkey,
         #[clap(subcommand)]
         subcmd: staking::StakingCommand,

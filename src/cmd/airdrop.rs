@@ -35,29 +35,31 @@ pub enum AirdropCommand {
     /// Get account data for airdrop account.
     Account {
         /// Base-58 public key of the account.
+        #[clap(value_parser)]
         address: Pubkey,
         /// Output data as serialized JSON.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         json: bool,
         /// Formatted data output.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         pretty: bool,
     },
     /// Claim rewards airdrop.
     Claim {
         /// The public key of the target airdrop.
+        #[clap(value_parser)]
         airdrop: Pubkey,
     },
     /// List all airdrops for a stake pool.
     List {
         /// Output data as serialized JSON.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         json: bool,
         /// Formatted data output.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         pretty: bool,
         /// The stake pool associated with the airdrop(s).
-        #[clap(long, default_value = DEFAULT_STAKE_POOL)]
+        #[clap(long, value_parser, default_value = DEFAULT_STAKE_POOL)]
         stake_pool: Pubkey,
     },
 }

@@ -18,7 +18,7 @@ use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::signature::Keypair;
 use anchor_client::Cluster;
 use anyhow::{anyhow, Result};
-use clap::{Parser, ValueHint};
+use clap::{Parser, PossibleValue, ValueHint};
 use solana_cli_config::Config as SolanaConfig;
 use std::fs::read_to_string;
 use std::path::PathBuf;
@@ -29,23 +29,19 @@ use std::rc::Rc;
 #[derive(Debug, Parser)]
 pub struct Overrides {
     /// Auto-approve the signing and execution of the command transaction(s).
-    #[clap(global = true, long)]
+    #[clap(global = true, long, value_parser)]
     auto_approve: bool,
     /// Override of the commitment level used for the RPC client.
-    #[clap(global = true, long, possible_values = ["confirmed", "finalized", "processed"])]
+    #[clap(global = true, long, value_parser = [PossibleValue::new("confirmed"), PossibleValue::new("finalized"), PossibleValue::new("processed")])]
     commitment: Option<CommitmentConfig>,
     /// Override of the path to the keypair to be used as signer.
-    #[clap(
-        global = true,
-        long,
-        value_hint = ValueHint::FilePath,
-    )]
+    #[clap(global = true, long, value_parser, value_hint = ValueHint::FilePath)]
     keypair: Option<String>,
     /// Override of the cluster or RPC URL to use (or their first letter): ["mainnet-beta", "devnet", "testnet", "localnet"].
-    #[clap(global = true, short = 'u', long)]
+    #[clap(global = true, short = 'u', long, value_parser)]
     url: Option<Cluster>,
     /// Enables logging verbosity for things like transaction signatures.
-    #[clap(global = true, short = 'v', long)]
+    #[clap(global = true, short = 'v', long, value_parser)]
     verbose: bool,
 }
 

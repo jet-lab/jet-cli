@@ -21,7 +21,7 @@ opt-level = "s"
 anchor-client = { git = "https://github.com/jet-lab/anchor", branch = "master" }
 anchor-spl = { git = "https://github.com/jet-lab/anchor", branch = "master" }
 anyhow = "1.0"
-clap = { version = "3.1", features = ["derive"] }
+clap = { version = "3.2", features = ["derive"] }
 dialoguer = "0.10"
 indicatif = "0.16"
 jet-proto-auth = { git = "https://github.com/jet-lab/jet-governance", branch = "master", features = ["cli"] }

@@ -33,55 +33,58 @@ pub enum MarginPoolCommand {
     /// Borrow funds from a margin pool.
     Borrow {
         /// The token amount to borrow from the pool.
+        #[clap(value_parser)]
         amount: u64,
         /// Margin account to sign the borrow.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         account: Pubkey,
         /// Account to receive borrowed tokens.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         deposit_account: Pubkey,
         /// Account to receive the loan notes.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         loan_account: Pubkey,
         /// Target margin pool.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         pool: Pubkey,
     },
     /// Deposit into an existing margin pool.
     Deposit {
         /// The token amount to deposit into the pool.
+        #[clap(value_parser)]
         amount: u64,
         /// Margin account that owns the source token account.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         account: Pubkey,
         /// Destination token account address.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         destination: Pubkey,
         /// Target margin pool.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         pool: Pubkey,
         /// Fund source token account.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         source: Pubkey,
     },
     /// Derive the public key of a margin pool.
     Derive {
         /// The underlying token mint address.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         token_mint: Pubkey,
     },
     /// Get the account data for a margin pool or all that exist.
     Get {
         /// Public key of specific pool to get.
+        #[clap(value_parser)]
         address: Option<Pubkey>,
         /// Output data as serialized JSON.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         json: bool,
         /// Formatted data output.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         pretty: bool,
         /// Token mint to derive margin pool.
-        #[clap(long, conflicts_with = "address")]
+        #[clap(long, value_parser, conflicts_with = "address")]
         token_mint: Option<Pubkey>,
     },
 }

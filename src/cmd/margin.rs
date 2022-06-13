@@ -45,71 +45,73 @@ pub enum MarginCommand {
     /// Get the account data for a user's margin account or all they own.
     Account {
         /// Base-58 public key of the margin account.
+        #[clap(value_parser)]
         address: Option<Pubkey>,
         /// Output data as serialized JSON.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         json: bool,
         /// Base-58 public key of the owner to use to derive.
-        #[clap(long, conflicts_with = "address")]
+        #[clap(long, value_parser, conflicts_with = "address")]
         owner: Option<Pubkey>,
         /// Formatted data output.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         pretty: bool,
     },
     /// Check the health of the positions in a margin account.
     Check {
         /// Base-58 public key of the margin account.
+        #[clap(value_parser)]
         address: Pubkey,
         /// Output data as serialized JSON.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         json: bool,
         /// Formatted data output.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         pretty: bool,
     },
     /// Close your margin account.
     CloseAccount {
         /// The public key to receive the rent.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         receiver: Option<Pubkey>,
         /// The numerical seed for the account to close.
-        #[clap(short, long)]
+        #[clap(short, long, value_parser)]
         seed: u16,
     },
     /// Close a position owned by a margin account.
     ClosePosition {
         /// Base-58 public key of the margin account.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         account: Pubkey,
         /// Base-58 public key of the target position token mint.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         position_mint: Pubkey,
         /// The public key to receive the rent.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         receiver: Option<Pubkey>,
     },
     /// Create a new margin account.
     CreateAccount {
         /// The numerical seed for the new account.
-        #[clap(short, long)]
+        #[clap(short, long, value_parser)]
         seed: u16,
     },
     /// Derive the public key of a margin account.
     Derive {
         /// Base-58 override of the account owner.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         owner: Option<Pubkey>,
         /// The numerical seed for the account.
-        #[clap(short, long)]
+        #[clap(short, long, value_parser)]
         seed: u16,
     },
     /// Register a new margin position.
     Register {
         /// Base-58 public key of the margin account.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         account: Pubkey,
         /// Base-58 public key of the target position token mint.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         position_mint: Pubkey,
     },
 }

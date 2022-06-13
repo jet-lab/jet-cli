@@ -32,15 +32,16 @@ pub enum AuthCommand {
     /// Get the account data for the user's auth account.
     Account {
         /// Base-58 public key of the account.
+        #[clap(value_parser)]
         address: Option<Pubkey>,
         /// Output data as serialized JSON.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         json: bool,
         /// Base-58 public key of the account owner.
-        #[clap(long, conflicts_with = "address")]
+        #[clap(long, value_parser, conflicts_with = "address")]
         owner: Option<Pubkey>,
         /// Formatted data output.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         pretty: bool,
     },
     /// Create a new auth account.
@@ -48,7 +49,7 @@ pub enum AuthCommand {
     /// Derive the public key of an auth account.
     Derive {
         /// Base-58 override of the account owner.
-        #[clap(long)]
+        #[clap(long, value_parser)]
         owner: Option<Pubkey>,
     },
 }
