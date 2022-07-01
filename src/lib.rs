@@ -61,14 +61,6 @@ enum Command {
         #[clap(subcommand)]
         subcmd: auth::AuthCommand,
     },
-    /// jet_bonds program commands.
-    Bonds {
-        /// Override of the `jet_bonds` program ID.
-        #[clap(global = true, long, value_parser, default_value_t = jet_bonds::ID)]
-        program: Pubkey,
-        #[clap(subcommand)]
-        subcmd: bonds::BondsCommand,
-    },
     /// jet_margin program commands.
     Margin {
         /// Override of the `jet_margin` program ID.
@@ -101,7 +93,6 @@ pub fn run(opts: Opts) -> Result<()> {
     match opts.command {
         Command::Airdrop { program, subcmd } => airdrop::entry(&opts.cfg, &program, &subcmd),
         Command::Auth { program, subcmd } => auth::entry(&opts.cfg, &program, &subcmd),
-        Command::Bonds { program, subcmd } => bonds::entry(&opts.cfg, &program, &subcmd),
         Command::Margin { program, subcmd } => margin::entry(&opts.cfg, &program, &subcmd),
         Command::MarginPool { program, subcmd } => margin_pool::entry(&opts.cfg, &program, &subcmd),
         Command::Staking { program, subcmd } => staking::entry(&opts.cfg, &program, &subcmd),

@@ -28,23 +28,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
-name = "agnostic-orderbook"
-version = "0.1.0"
-source = "git+https://github.com/Bonfida/agnostic-orderbook.git?branch=main#366415e6e484fe05ef70841d0c40396fb9a43f2c"
-dependencies = [
- "bonfida-utils",
- "borsh",
- "bytemuck",
- "enumflags2",
- "num-derive",
- "num-traits",
- "num_enum",
- "solana-program",
- "spl-token",
- "thiserror",
-]
-
-[[package]]
 name = "ahash"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -383,38 +366,6 @@ name = "block-padding"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
-
-[[package]]
-name = "bonds-metadata"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
-]
-
-[[package]]
-name = "bonfida-macros"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5560c4eb64bcc9c0eb4ad3975155c30cb353a898299dcc47c5400bf7e21c60ff"
-dependencies = [
- "proc-macro2 1.0.40",
- "quote 1.0.20",
- "solana-program",
- "syn 1.0.98",
-]
-
-[[package]]
-name = "bonfida-utils"
-version = "0.2.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54de4600e2bb8367d0f5e4100a272a738f2c3713611591504def19c0da482c22"
-dependencies = [
- "bonfida-macros",
- "borsh",
- "pyth-sdk-solana",
- "solana-program",
- "spl-token",
-]
 
 [[package]]
 name = "borsh"
@@ -979,26 +930,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "enumflags2"
-version = "0.7.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e75d4cd21b95383444831539909fbb14b9dc3fdceb2a6f5d36577329a1f55ccb"
-dependencies = [
- "enumflags2_derive",
-]
-
-[[package]]
-name = "enumflags2_derive"
-version = "0.7.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f58dc3c5e468259f19f2d46304a6b28f1c3d034442e14b322d2b850e36f6d5ae"
-dependencies = [
- "proc-macro2 1.0.40",
- "quote 1.0.20",
- "syn 1.0.98",
-]
-
-[[package]]
 name = "env_logger"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1519,25 +1450,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "112c678d4050afce233f4f2852bb2eb519230b3cf12f33585275537d7e41578d"
 
 [[package]]
-name = "jet-bonds"
-version = "0.1.0"
-dependencies = [
- "agnostic-orderbook",
- "anchor-lang",
- "anchor-spl",
- "arrayref",
- "bitflags",
- "bonds-metadata",
- "borsh",
- "bytemuck",
- "num-derive",
- "num-traits",
- "serde",
-]
-
-[[package]]
 name = "jet-cli"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "anchor-client",
  "anchor-spl",
@@ -1545,7 +1459,6 @@ dependencies = [
  "clap 3.2.5",
  "dialoguer 0.10.1",
  "indicatif",
- "jet-bonds",
  "jet-margin",
  "jet-margin-pool",
  "jet-metadata",
