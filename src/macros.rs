@@ -22,7 +22,7 @@
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// let program = program_client!(config, jet_staking::ID);
 /// let stake_account = find_staking_address(&pool, &owner);
 /// assert_exists!(program, jet_staking::state::StakeAccount, &stake_account);
@@ -31,7 +31,7 @@
 /// You can also provide a fallback block of code to execute in-place
 /// of throwing an error on a bad assertion:
 ///
-/// ```
+/// ```ignore
 /// let program = program_client!(config, jet_staking::ID);
 /// let stake_account = find_staking_address(&pool, &owner);
 /// assert_exists!(
@@ -75,7 +75,7 @@ pub(crate) use assert_exists;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// let program = program_client!(config, jet_staking::ID);
 /// let stake_account = find_staking_address(&pool, &owner);
 /// assert_not_exists!(program, jet_staking::state::StakeAccount, &stake_account);
@@ -84,7 +84,7 @@ pub(crate) use assert_exists;
 /// You can also provide a fallback block of code to execute in-place
 /// of throwing an error on a bad assertion:
 ///
-/// ```
+/// ```ignore
 /// let program = program_client!(config, jet_staking::ID);
 /// let stake_account = find_staking_address(&pool, &owner);
 /// assert_not_exists!(
