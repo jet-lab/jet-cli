@@ -61,16 +61,16 @@ cargo run margin create-account -u d --seed 0
 
 ```sh
 # Create a devnet margin account
-jet-cli margin create-account -u d --seed 0
+jet margin create-account -u d --seed 0
 
 # Store the margin account pubkey in $account
-account=$(jet-cli margin derive --seed 0)
+account=$(jet margin derive --seed 0)
 
 echo $account
 # 77tJm3j57zMaGR1bFDgWKeJphQarK3fkhB3VPT912zha
 
 # Deposit into the pool (Requires the pool and token account pubkey)
-jet-cli margin-pool deposit --account $account --pool $pool --source $source 1
+jet margin-pool deposit --account $account --pool $pool --source $source 1
 ```
 
 # Troubleshooting
